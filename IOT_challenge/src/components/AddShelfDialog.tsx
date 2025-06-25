@@ -10,13 +10,13 @@ import {
 } from "@mui/material";
 import { useSelector } from "react-redux";
 import { RootState } from "../store";
-import { ShelfCreationData } from "../types/selfTypes";
+import { Shelf, ShelfCreationData } from "../types/selfTypes";
 import { createShelf } from "../service/shefl.service";
 
 interface AddShelfDialogProps {
   open: boolean;
   onClose: () => void;
-  onShelfAdded: () => void;
+  onShelfAdded: (shelf: Shelf) => void;
 }
 
 const AddShelfDialog: React.FC<AddShelfDialogProps> = ({

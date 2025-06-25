@@ -1,36 +1,36 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 
 const LoadCellSchema = new mongoose.Schema({
   load_cell_id: {
     type: Number,
-    required: true
+    required: true,
   },
   load_cell_name: {
     type: String,
-    required: true
+    required: true,
   },
   product_id: {
-    type: String
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Product",
   },
   shelf_id: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Shelf',
-    required: true
+    ref: "Shelf",
+    required: true,
   },
   quantity: {
     type: Number,
-    required: true
+    required: true,
   },
 
-  // 🆕 Thêm tầng và cột
   floor: {
     type: Number,
-    required: true
-  }, // tầng
+    required: true,
+  },
   column: {
     type: Number,
-    required: true
-  } // cột
+    required: true,
+  }, // cột
 });
 
-module.exports =  mongoose.model('LoadCell', LoadCellSchema);
+module.exports = mongoose.model("LoadCell", LoadCellSchema);
