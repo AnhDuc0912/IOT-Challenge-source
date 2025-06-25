@@ -1,15 +1,16 @@
 import React from "react";
 import { Paper, Typography, Grid } from "@mui/material";
-import { Shelf } from "../mock/shelfMockData";
+import { Shelf, LoadCell } from "../types/selfTypes";
 
 interface ShelfStatisticsProps {
   shelf?: Shelf;
+  loadCells: LoadCell[]; // MỚI: Thêm prop loadCells
 }
 
-const ShelfStatistics: React.FC<ShelfStatisticsProps> = ({ shelf }) => (
+const ShelfStatistics: React.FC<ShelfStatisticsProps> = ({ shelf, loadCells }) => (
   <Paper sx={{ mt: 4, p: 2 }}>
     <Typography variant="h6" gutterBottom>
-      Shelf Statistics - {shelf?.name}
+      Shelf Statistics - {shelf?.shelf_name || "Unknown Shelf"}
     </Typography>
     <Grid container spacing={2}>
       <Grid component="div" size={3}>
@@ -23,7 +24,7 @@ const ShelfStatistics: React.FC<ShelfStatisticsProps> = ({ shelf }) => (
           Occupied
         </Typography>
         <Typography variant="h4" color="primary">
-          {shelf?.items.filter((item) => item.product !== null).length || 0}
+          {loadCells.filter((cell) => cell.product_id !== "").length}
         </Typography>
       </Grid>
       <Grid component="div" size={3}>
@@ -31,7 +32,7 @@ const ShelfStatistics: React.FC<ShelfStatisticsProps> = ({ shelf }) => (
           Available
         </Typography>
         <Typography variant="h4" color="success.main">
-          {shelf?.items.filter((item) => item.product === null).length || 0}
+          {loadCells.filter((cell) => cell.product_id === "").length}
         </Typography>
       </Grid>
       <Grid component="div" size={3}>
@@ -39,16 +40,11 @@ const ShelfStatistics: React.FC<ShelfStatisticsProps> = ({ shelf }) => (
           Occupancy Rate
         </Typography>
         <Typography variant="h4" color="warning.main">
-          {shelf
-            ? Math.round(
-                (shelf.items.filter((item) => item.product !== null).length / 15) * 100
-              )
-            : 0}
-          %
+          {Math.round((loadCells.filter((cell) => cell.product_id !== "").length / 15) * 100)}%
         </Typography>
       </Grid>
     </Grid>
   </Paper>
 );
 
-export default ShelfStatistics; 
+export default ShelfStatistics;

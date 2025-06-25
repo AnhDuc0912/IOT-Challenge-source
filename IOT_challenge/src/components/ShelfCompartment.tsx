@@ -1,11 +1,11 @@
 import React from "react";
 import { Paper, Typography } from "@mui/material";
-import { ShelfItem } from "../mock/shelfMockData";
+import { LoadCell, Product } from "../types/selfTypes";
 
 interface ShelfCompartmentProps {
   level: number;
   compartment: number;
-  shelfItem: ShelfItem | undefined;
+  shelfItem: (LoadCell & { product: Product | null }) | null;
   handleDragOver: (e: React.DragEvent) => void;
   handleDrop: (e: React.DragEvent, level: number, compartment: number) => void;
   handleRemoveFromShelf: (level: number, compartment: number) => void;
@@ -20,6 +20,7 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
   handleRemoveFromShelf,
 }) => {
   const isEmpty = !shelfItem?.product;
+
   return (
     <Paper
       onDragOver={handleDragOver}
@@ -49,8 +50,8 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
       ) : (
         <>
           <img
-            src={shelfItem.product!.image || "/placeholder.svg"}
-            alt={shelfItem.product!.name}
+            src={shelfItem.product!.img_url || "/placeholder.svg"} // SỬA: Dùng img_url thay vì image
+            alt={shelfItem.product!.product_name} // SỬA: Dùng product_name thay vì name
             style={{
               width: 60,
               height: 60,
@@ -64,7 +65,14 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
             noWrap
             sx={{ maxWidth: "100%" }}
           >
-            {shelfItem.product!.name}
+            {shelfItem.product!.product_name} {/* SỬA: Dùng product_name */}
+          </Typography>
+          <Typography
+            variant="caption"
+            textAlign="center"
+            color="text.secondary"
+          >
+            Số lượng: {shelfItem.quantity} {/* MỚI: Hiển thị quantity */}
           </Typography>
         </>
       )}
@@ -72,4 +80,4 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
   );
 };
 
-export default ShelfCompartment; 
+export default ShelfCompartment;

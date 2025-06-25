@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Product, Shelf, ShelfCreationData } from "../types/selfTypes";
+import { Product, Shelf, ShelfCreationData,LoadCellResponse, LoadCell } from "../types/selfTypes";
 const API_URL = import.meta.env.VITE_API_ENDPOINT;
 
 export const fetchProducts = async (): Promise<Product[]> => {
@@ -21,3 +21,14 @@ export const createShelf = async (
   
   return response.data;
 };
+
+export const fetchLoadCellsByShelfId = async (shelfId: string): Promise<LoadCellResponse> => {
+  try {
+    const response = await axios.get(`${API_URL}/shelves/get-loadcell/${shelfId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching load cells for shelf ${shelfId}:`, error);
+    throw error;
+  }
+};
+
