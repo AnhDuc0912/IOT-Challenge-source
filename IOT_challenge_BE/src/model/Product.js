@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
+const multer = require("multer");
+const path = require("path");
 
 const ProductSchema = new mongoose.Schema({
   product_id: {
     type: String,
-    required: true
   },
   product_name: {
     type: String,

@@ -20,6 +20,8 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
   handleRemoveFromShelf,
 }) => {
   const isEmpty = !shelfItem?.product;
+  console.log(shelfItem?.product);
+  
 
   return (
     <Paper
@@ -43,15 +45,15 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
         },
       }}
     >
-      {isEmpty ? (
+      {!shelfItem?.product ? (
         <Typography variant="body2" color="text.secondary">
           Drop here
         </Typography>
       ) : (
         <>
           <img
-            src={shelfItem.product!.img_url || "/placeholder.svg"} // SỬA: Dùng img_url thay vì image
-            alt={shelfItem.product!.product_name} // SỬA: Dùng product_name thay vì name
+            src={shelfItem.product!.img_url || "/placeholder.svg"}
+            alt={shelfItem.product!.product_name}
             style={{
               width: 60,
               height: 60,
@@ -65,14 +67,14 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
             noWrap
             sx={{ maxWidth: "100%" }}
           >
-            {shelfItem.product!.product_name} {/* SỬA: Dùng product_name */}
+            {shelfItem.product!.product_name}
           </Typography>
           <Typography
             variant="caption"
             textAlign="center"
             color="text.secondary"
           >
-            Số lượng: {shelfItem.quantity} {/* MỚI: Hiển thị quantity */}
+            Quantity: {shelfItem.quantity}
           </Typography>
         </>
       )}

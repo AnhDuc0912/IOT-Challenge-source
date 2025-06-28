@@ -14,3 +14,17 @@ export const updateLoadCell = async (
     throw error;
   }
 };
+
+export const removeProductFromLoadcell = async (
+  loadCellId: string,
+  data: Partial<LoadCell>
+): Promise<LoadCell> => {
+  try {
+    const response = await axios.put(`${API_URL}/loadcell/${loadCellId}`, data);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating load cell ${loadCellId}:`, error);
+    throw error;
+  }
+};
+

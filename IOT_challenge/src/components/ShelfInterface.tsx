@@ -172,7 +172,7 @@ export default function ShelfInterface() {
         try {
 
           await updateLoadCell(targetCell._id, {
-            product_id: product.product_id,
+            product_id: product._id,
             quantity: 1,
           });
           // Chỉ cập nhật state nếu API thành công
@@ -211,7 +211,7 @@ export default function ShelfInterface() {
       // Cập nhật backend
       try {
         await updateLoadCell(targetCell._id, {
-          product_id: "",
+          product_id: null,
           quantity: 0,
         });
       } catch (error) {
@@ -228,21 +228,13 @@ export default function ShelfInterface() {
     if (!loadCell) return null;
 
     const product = sampleProducts.find(
-      (p) => p.product_id === loadCell.product_id
+      (p) => p._id === loadCell.product_id
     );
 
     return {
       ...loadCell,
       product: product || null,
     };
-  };
-
-  const handleMenuOpen = (
-    event: React.MouseEvent<HTMLElement>,
-    shelfId: string
-  ) => {
-    setMenuAnchor(event.currentTarget);
-    setSelectedShelfForMenu(shelfId);
   };
 
   const handleMenuClose = () => {

@@ -47,22 +47,23 @@ import {
   Clear as ClearIcon,
   Image as ImageIcon,
   Save as SaveIcon,
-  ArrowBack as ArrowBackIcon,
   ViewModule as ViewModuleIcon,
   ViewList as ViewListIcon,
   Sort as SortIcon,
 } from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
-import { Product, categories, initialProducts } from "../mock/productMockData";
+import { Product } from "../types/selfTypes";
 import ProductItem from "../components/ProductItem";
+import ProductDialog from "../components/ProductDialog";
+import {
+  fetchProducts,
+  addProduct,
+  updateProduct,
+} from "../service/product.service";
 
 export default function ProductManagement() {
-  const navigate = useNavigate();
-  const [products, setProducts] = useState<Product[]>(initialProducts);
-  const [filteredProducts, setFilteredProducts] =
-    useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
@@ -72,94 +73,59 @@ export default function ProductManagement() {
     severity: "success" as "success" | "error",
   });
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [sortBy, setSortBy] = useState<
-    "name" | "price" | "category" | "createdAt"
-  >("createdAt");
+  const [sortBy, setSortBy] = useState<"product_name" | "price" | "createdAt">(
+    "createdAt"
+  );
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Form state
-  const [formData, setFormData] = useState({
-    id: "",
-    name: "",
-    image: "/placeholder.svg?height=200&width=200",
-    category: "",
-    price: 0,
-    description: "",
-    stock: 0,
-    sku: "",
-  });
-
   // Filter and sort products
   useEffect(() => {
-    let result = [...products];
+    const fetchAndSetProducts = async () => {
+      let result = await fetchProducts();
 
-    // Apply search filter
-    if (searchTerm) {
-      result = result.filter(
-        (product) =>
-          product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          product.description
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          product.sku?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Apply category filter
-    if (categoryFilter) {
-      result = result.filter((product) => product.category === categoryFilter);
-    }
-
-    // Apply sorting
-    result.sort((a, b) => {
-      if (sortBy === "price") {
-        return sortDirection === "asc" ? a.price - b.price : b.price - a.price;
-      } else if (sortBy === "createdAt") {
-        return sortDirection === "asc"
-          ? a.createdAt.getTime() - b.createdAt.getTime()
-          : b.createdAt.getTime() - a.createdAt.getTime();
-      } else {
-        const valueA = a[sortBy].toString().toLowerCase();
-        const valueB = b[sortBy].toString().toLowerCase();
-        return sortDirection === "asc"
-          ? valueA.localeCompare(valueB)
-          : valueB.localeCompare(valueA);
+      // Apply search filter
+      if (searchTerm) {
+        result = result.filter((product) =>
+          product.product_name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
       }
-    });
 
-    setFilteredProducts(result);
-  }, [products, searchTerm, categoryFilter, sortBy, sortDirection]);
+      // Apply sorting
+      result.sort((a, b) => {
+        if (sortBy === "price") {
+          return sortDirection === "asc"
+            ? a.price - b.price
+            : b.price - a.price;
+        } else if (sortBy === "createdAt") {
+          const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return sortDirection === "asc" ? timeA - timeB : timeB - timeA;
+        } else {
+          const valueA = a[sortBy].toString().toLowerCase();
+          const valueB = b[sortBy].toString().toLowerCase();
+          return sortDirection === "asc"
+            ? valueA.localeCompare(valueB)
+            : valueB.localeCompare(valueA);
+        }
+      });
+
+      setProducts(result);
+      setFilteredProducts(result);
+    };
+
+    fetchAndSetProducts();
+  }, [searchTerm, sortBy, sortDirection]);
 
   const handleAddProduct = () => {
     setCurrentProduct(null);
-    setFormData({
-      id: "",
-      name: "",
-      image: "/placeholder.svg?height=200&width=200",
-      category: "",
-      price: 0,
-      description: "",
-      stock: 0,
-      sku: "",
-    });
     setDialogOpen(true);
   };
 
   const handleEditProduct = (product: Product) => {
     setCurrentProduct(product);
-    setFormData({
-      id: product.id,
-      name: product.name,
-      image: product.image,
-      category: product.category,
-      price: product.price,
-      description: product.description || "",
-      stock: product.stock || 0,
-      sku: product.sku || "",
-    });
     setDialogOpen(true);
   };
 
@@ -170,18 +136,23 @@ export default function ProductManagement() {
 
   const confirmDeleteProduct = () => {
     if (currentProduct) {
-      setProducts((prev) => prev.filter((p) => p.id !== currentProduct.id));
+      setProducts((prev) =>
+        prev.filter((p) => p.product_id !== currentProduct.product_id)
+      );
       setSnackbar({
         open: true,
-        message: `${currentProduct.name} has been deleted`,
+        message: `${currentProduct.product_name} has been deleted`,
         severity: "success",
       });
       setDeleteDialogOpen(false);
     }
   };
 
-  const handleSaveProduct = () => {
-    if (!formData.name || !formData.category || formData.price <= 0) {
+  const handleSaveProduct = async (
+    formData: Omit<Product, "createdAt" | "updatedAt">,
+    file?: File
+  ) => {
+    if (!formData.product_name || formData.price <= 0) {
       setSnackbar({
         open: true,
         message: "Please fill in all required fields",
@@ -190,36 +161,62 @@ export default function ProductManagement() {
       return;
     }
 
-    const newProduct: Product = {
-      id: currentProduct ? currentProduct.id : Date.now().toString(),
-      name: formData.name,
-      image: formData.image,
-      category: formData.category,
-      price: formData.price,
-      description: formData.description,
-      stock: formData.stock,
-      sku: formData.sku,
-      createdAt: currentProduct ? currentProduct.createdAt : new Date(),
-    };
-
     if (currentProduct) {
-      // Update existing product
-      setProducts((prev) =>
-        prev.map((p) => (p.id === currentProduct.id ? newProduct : p))
-      );
-      setSnackbar({
-        open: true,
-        message: `${newProduct.name} has been updated`,
-        severity: "success",
-      });
+      try {
+        const updatedProduct = await updateProduct(
+          currentProduct._id,
+          formData,
+          file
+        );
+
+        setProducts((prev) =>
+          prev.map((p) =>
+            p.product_id === updatedProduct.product_id ? updatedProduct : p
+          )
+        );
+        setFilteredProducts((prev) =>
+          prev.map((p) =>
+            p.product_id === updatedProduct.product_id ? updatedProduct : p
+          )
+        );
+        setSnackbar({
+          open: true,
+          message: `${updatedProduct.product_name} has been updated`,
+          severity: "success",
+        });
+      } catch (error) {
+        setSnackbar({
+          open: true,
+          message: "Failed to update product.",
+          severity: "error",
+        });
+      }
     } else {
-      // Add new product
-      setProducts((prev) => [...prev, newProduct]);
-      setSnackbar({
-        open: true,
-        message: `${newProduct.name} has been added`,
-        severity: "success",
-      });
+      try {
+        const productToAdd = {
+          product_id: Date.now().toString(),
+          product_name: formData.product_name,
+          img_url: "", // backend sẽ tự set
+          price: formData.price,
+          stock: formData.stock,
+        };
+
+        const addedProduct = await addProduct(productToAdd, file);
+
+        setProducts((prev) => [...prev, addedProduct]);
+        setFilteredProducts((prev) => [...prev, addedProduct]);
+        setSnackbar({
+          open: true,
+          message: `${addedProduct.product_name} has been added`,
+          severity: "success",
+        });
+      } catch (error) {
+        setSnackbar({
+          open: true,
+          message: "Failed to add product.",
+          severity: "error",
+        });
+      }
     }
 
     setDialogOpen(false);
@@ -227,18 +224,6 @@ export default function ProductManagement() {
 
   const handleImageUpload = () => {
     fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // In a real app, you would upload the file to a server and get a URL back
-      // For this demo, we'll just use a placeholder
-      const imageUrl = `/placeholder.svg?height=200&width=200&text=${encodeURIComponent(
-        file.name
-      )}`;
-      setFormData((prev) => ({ ...prev, image: imageUrl }));
-    }
   };
 
   const handleChangePage = (_event: unknown, newPage: number) => {
@@ -252,9 +237,7 @@ export default function ProductManagement() {
     setPage(0);
   };
 
-  const handleSortChange = (
-    column: "name" | "price" | "category" | "createdAt"
-  ) => {
+  const handleSortChange = (column: "product_name" | "price" | "createdAt") => {
     if (sortBy === column) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -265,13 +248,12 @@ export default function ProductManagement() {
 
   const clearFilters = () => {
     setSearchTerm("");
-    setCategoryFilter("");
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+    <Box sx={{ display: "flex", flexDirection: "column" }}>
       {/* Header */}
-      <Box sx={{ bgcolor: "primary.main", color: "white", py: 2, px: 3 }}>
+      <Box sx={{ py: 2, px: 3 }}>
         <Container maxWidth="xl">
           <Box
             sx={{
@@ -280,17 +262,12 @@ export default function ProductManagement() {
               alignItems: "center",
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <IconButton color="inherit" onClick={() => navigate("/")}>
-                <ArrowBackIcon />
-              </IconButton>
-              <Typography variant="h5" sx={{ ml: 2 }}>
-                Product Management
-              </Typography>
-            </Box>
+            <Typography variant="h5" sx={{ ml: 2 }}>
+              Product Management
+            </Typography>
             <Button
               variant="contained"
-              color="secondary"
+              color="primary"
               startIcon={<AddIcon />}
               onClick={handleAddProduct}
               sx={{ fontWeight: "bold" }}
@@ -306,7 +283,7 @@ export default function ProductManagement() {
         {/* Filters */}
         <Paper sx={{ p: 2, mb: 3 }}>
           <Grid container spacing={2} alignItems="center">
-            <Grid size={4}>
+            <Grid size={6}>
               <TextField
                 fullWidth
                 placeholder="Search products..."
@@ -331,25 +308,7 @@ export default function ProductManagement() {
                 }}
               />
             </Grid>
-            <Grid size={3}>
-              <FormControl fullWidth>
-                <InputLabel>Category</InputLabel>
-                <Select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  label="Category"
-                  displayEmpty
-                >
-                  <MenuItem value="">All Categories</MenuItem>
-                  {categories.map((category) => (
-                    <MenuItem key={category} value={category}>
-                      {category}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={3}>
+            <Grid size={4}>
               <FormControl fullWidth>
                 <InputLabel>Sort By</InputLabel>
                 <Select
@@ -358,7 +317,7 @@ export default function ProductManagement() {
                     const [newSortBy, newSortDirection] = e.target.value.split(
                       "-"
                     ) as [
-                      "name" | "price" | "category" | "createdAt",
+                      "product_name" | "price" | "createdAt",
                       "asc" | "desc"
                     ];
                     setSortBy(newSortBy);
@@ -366,11 +325,10 @@ export default function ProductManagement() {
                   }}
                   label="Sort By"
                 >
-                  <MenuItem value="name-asc">Name (A-Z)</MenuItem>
-                  <MenuItem value="name-desc">Name (Z-A)</MenuItem>
+                  <MenuItem value="product_name-asc">Name (A-Z)</MenuItem>
+                  <MenuItem value="product_name-desc">Name (Z-A)</MenuItem>
                   <MenuItem value="price-asc">Price (Low to High)</MenuItem>
                   <MenuItem value="price-desc">Price (High to Low)</MenuItem>
-                  <MenuItem value="category-asc">Category (A-Z)</MenuItem>
                   <MenuItem value="createdAt-desc">Newest First</MenuItem>
                   <MenuItem value="createdAt-asc">Oldest First</MenuItem>
                 </Select>
@@ -382,7 +340,7 @@ export default function ProductManagement() {
                 variant="outlined"
                 startIcon={<ClearIcon />}
                 onClick={clearFilters}
-                disabled={!searchTerm && !categoryFilter}
+                disabled={!searchTerm}
               >
                 Clear
               </Button>
@@ -424,7 +382,7 @@ export default function ProductManagement() {
             {filteredProducts
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((product) => (
-                <Grid size={4} key={product.id}>
+                <Grid size={12} key={product._id}>
                   <ProductItem
                     product={product}
                     onEdit={handleEditProduct}
@@ -446,34 +404,10 @@ export default function ProductManagement() {
                         alignItems: "center",
                         cursor: "pointer",
                       }}
-                      onClick={() => handleSortChange("name")}
+                      onClick={() => handleSortChange("product_name")}
                     >
                       Name
-                      {sortBy === "name" && (
-                        <SortIcon
-                          fontSize="small"
-                          sx={{
-                            ml: 0.5,
-                            transform:
-                              sortDirection === "desc"
-                                ? "rotate(180deg)"
-                                : "none",
-                          }}
-                        />
-                      )}
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        cursor: "pointer",
-                      }}
-                      onClick={() => handleSortChange("category")}
-                    >
-                      Category
-                      {sortBy === "category" && (
+                      {sortBy === "product_name" && (
                         <SortIcon
                           fontSize="small"
                           sx={{
@@ -512,7 +446,6 @@ export default function ProductManagement() {
                     </Box>
                   </TableCell>
                   <TableCell>Stock</TableCell>
-                  <TableCell>SKU</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -520,33 +453,22 @@ export default function ProductManagement() {
                 {filteredProducts
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((product) => (
-                    <TableRow key={product.id}>
+                    <TableRow key={product.product_id}>
                       <TableCell>
                         <Box
                           component="img"
-                          src={product.image}
-                          alt={product.name}
+                          src={product.img_url}
+                          alt={product.product_name}
                           sx={{ width: 60, height: 60, objectFit: "contain" }}
                         />
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" fontWeight="medium">
-                          {product.name}
+                          {product.product_name}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {product.description?.substring(0, 50)}
-                          {product.description &&
-                          product.description.length > 50
-                            ? "..."
-                            : ""}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip label={product.category} size="small" />
                       </TableCell>
                       <TableCell>${product.price.toFixed(2)}</TableCell>
                       <TableCell>{product.stock}</TableCell>
-                      <TableCell>{product.sku}</TableCell>
                       <TableCell>
                         <Box sx={{ display: "flex", gap: 1 }}>
                           <IconButton
@@ -598,175 +520,12 @@ export default function ProductManagement() {
       </Container>
 
       {/* Add/Edit Product Dialog */}
-      <Dialog
+      <ProductDialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>
-          {currentProduct ? "Edit Product" : "Add New Product"}
-        </DialogTitle>
-        <DialogContent dividers>
-          <Grid container spacing={3}>
-            <Grid size={4}>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: "100%",
-                }}
-              >
-                <Box
-                  sx={{
-                    width: "100%",
-                    height: 200,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    border: "1px dashed",
-                    borderColor: "grey.300",
-                    borderRadius: 1,
-                    mb: 2,
-                    overflow: "hidden",
-                    bgcolor: "grey.50",
-                  }}
-                >
-                  {formData.image ? (
-                    <img
-                      src={formData.image || "/placeholder.svg"}
-                      alt="Product"
-                      style={{
-                        maxWidth: "100%",
-                        maxHeight: "100%",
-                        objectFit: "contain",
-                      }}
-                    />
-                  ) : (
-                    <ImageIcon sx={{ fontSize: 60, color: "grey.400" }} />
-                  )}
-                </Box>
-                <Button
-                  variant="outlined"
-                  startIcon={<ImageIcon />}
-                  onClick={handleImageUpload}
-                >
-                  Upload Image
-                </Button>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  style={{ display: "none" }}
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
-              </Box>
-            </Grid>
-            <Grid size={8}>
-              <Grid container spacing={2}>
-                <Grid size={12}>
-                  <TextField
-                    fullWidth
-                    label="Product Name"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    required
-                  />
-                </Grid>
-                <Grid size={12}>
-                  <FormControl fullWidth required>
-                    <InputLabel>Category</InputLabel>
-                    <Select
-                      value={formData.category}
-                      onChange={(e) =>
-                        setFormData({ ...formData, category: e.target.value })
-                      }
-                      label="Category"
-                    >
-                      {categories.map((category) => (
-                        <MenuItem key={category} value={category}>
-                          {category}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid size={12} >
-                  <TextField
-                    fullWidth
-                    label="Price"
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        price: Number.parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">$</InputAdornment>
-                      ),
-                    }}
-                    required
-                  />
-                </Grid>
-                <Grid size={12}>
-                  <TextField
-                    fullWidth
-                    label="Stock"
-                    type="number"
-                    value={formData.stock}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        stock: Number.parseInt(e.target.value) || 0,
-                      })
-                    }
-                  />
-                </Grid>
-                <Grid size={12}>
-                  <TextField
-                    fullWidth
-                    label="SKU"
-                    value={formData.sku}
-                    onChange={(e) =>
-                      setFormData({ ...formData, sku: e.target.value })
-                    }
-                    placeholder="e.g. ELEC-001"
-                  />
-                </Grid>
-                <Grid size={12}>
-                  <TextField
-                    fullWidth
-                    label="Description"
-                    multiline
-                    rows={4}
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                  />
-                </Grid>
-              </Grid>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleSaveProduct}
-            startIcon={<SaveIcon />}
-          >
-            {currentProduct ? "Update Product" : "Add Product"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onSave={handleSaveProduct}
+        product={currentProduct}
+      />
 
       {/* Delete Confirmation Dialog */}
       <Dialog
@@ -777,8 +536,8 @@ export default function ProductManagement() {
         <DialogContent>
           <Typography>
             Are you sure you want to delete{" "}
-            <strong>{currentProduct?.name}</strong>? This action cannot be
-            undone.
+            <strong>{currentProduct?.product_name}</strong>? This action cannot
+            be undone.
           </Typography>
         </DialogContent>
         <DialogActions>

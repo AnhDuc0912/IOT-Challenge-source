@@ -8,6 +8,7 @@ const connectDB = require('./src/config/database')
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 
 // Kết nối MongoDB
 console.log(process.env.MONGO_URI);

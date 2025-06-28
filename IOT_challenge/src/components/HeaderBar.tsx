@@ -17,7 +17,6 @@ import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
 
-
 const HeaderBar: React.FC = () => {
   const [editingShelf, setEditingShelf] = useState<number | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -35,58 +34,70 @@ const HeaderBar: React.FC = () => {
   };
 
   return (
-    <AppBar position="fixed">
-      <Toolbar>
-        <Box sx={{ flexGrow: 1, display: "flex", alignItems: "center" }}>
+    <>
+      <AppBar position="fixed">
+        <Toolbar>
+          <Box sx={{ flexGrow: 1, display: "flex", alignItems: "center" }}>
           <Button
-            color="inherit"
-            onClick={() => navigate("/products")}
-            sx={{ ml: 2 }}
-          >
-            Manage Products
-          </Button>
-          <Button
-            color="inherit"
-            onClick={() => navigate("/users")}
-            sx={{ ml: 2 }}
-          >
-            Manage Users
-          </Button>
-          <Button
-            color="inherit"
-            onClick={() => navigate("/receipts")}
-            sx={{ ml: 2 }}
-          >
-            Manage Receipts
-          </Button>
+              color="inherit"
+              onClick={() => navigate("/")}
+              sx={{ ml: 2 }}
+            >
+              Manage Shelves
+            </Button>
+            <Button
+              color="inherit"
+              onClick={() => navigate("/products")}
+              sx={{ ml: 2 }}
+            >
+              Manage Products
+            </Button>
+            <Button
+              color="inherit"
+              onClick={() => navigate("/users")}
+              sx={{ ml: 2 }}
+            >
+              Manage Users
+            </Button>
+            <Button
+              color="inherit"
+              onClick={() => navigate("/receipts")}
+              sx={{ ml: 2 }}
+            >
+              Manage Receipts
+            </Button>
 
-          <Box sx={{ ml: "auto" }}>
-            {isLoggedIn ? (
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Typography>{user?.fullName}</Typography>
+            <Box sx={{ ml: "auto" }}>
+              {isLoggedIn ? (
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Typography>{user?.fullName}</Typography>
+                  <Button
+                    color="inherit"
+                    onClick={() => {
+                      //   dispatch(logout action) hoặc navigate("/logout")
+                    }}
+                    sx={{ ml: 2 }}
+                  >
+                    Logout
+                  </Button>
+                </Box>
+              ) : (
                 <Button
                   color="inherit"
-                  onClick={() => {
-                    //   dispatch(logout action) hoặc navigate("/logout")
-                  }}
+                  onClick={() => navigate("/login")}
                   sx={{ ml: 2 }}
                 >
-                  Logout
+                  Login
                 </Button>
-              </Box>
-            ) : (
-              <Button
-                color="inherit"
-                onClick={() => navigate("/login")}
-                sx={{ ml: 2 }}
-              >
-                Login
-              </Button>
-            )}
+              )}
+            </Box>
           </Box>
-        </Box>
-      </Toolbar>
-    </AppBar>
+        </Toolbar>
+      </AppBar>
+      <Box sx={{ 
+        pt: "64px"
+       }}/>
+    </>
   );
 };
 
