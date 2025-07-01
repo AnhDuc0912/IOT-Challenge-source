@@ -3,7 +3,7 @@ version: '3.8'
 services:
   backend:
     build:
-      context: ./backend
+      context: ./IOT_challenge_BE
     container_name: iot-backend
     ports:
       - "3000:3000"
@@ -12,7 +12,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ./IOT_challenge
     container_name: iot-frontend
     ports:
       - "80:80"
