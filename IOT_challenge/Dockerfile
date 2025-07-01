@@ -1,7 +1,7 @@
 FROM node:18 as builder
 WORKDIR /app
 COPY . .
-RUN npm install && npm run build
+RUN npm install && npm install rollup && npm run build
 
 FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
