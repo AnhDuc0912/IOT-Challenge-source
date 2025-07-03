@@ -10,11 +10,11 @@ services:
       - ./IOT_challenge_BE/.env
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"] # Thay bằng endpoint kiểm tra sức khỏe
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
-
+      retries: 5 # Tăng số lần thử
+      start_period: 30s # Tăng thời gian khởi động
   frontend:
     build:
       context: ./IOT_challenge
@@ -23,7 +23,7 @@ services:
       - "8080:80"
     depends_on:
       backend:
-        condition: service_healthy # Chờ backend khỏe mạnh
+        condition: service_healthy
     environment:
       - VITE_API_ENDPOINT=http://iot-backend:3000/api
     restart: unless-stopped
