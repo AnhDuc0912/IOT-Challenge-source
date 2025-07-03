@@ -3,20 +3,16 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package.json và package-lock.json để cache dependencies
+# Copy package.json và package-lock.json
 COPY package*.json ./
-RUN npm cache clean --force && npm install
 
-# Nếu Rollup không cần thiết, bỏ dòng này
+# Làm sạch cache và cài đặt dependencies
+RUN npm cache clean --force && npm install
 RUN npm install rollup --save-dev
 
-# Copy toàn bộ mã nguồn
+# Copy mã nguồn và tệp .env.production
 COPY . .
-
-# Copy tệp .env.production (nếu cần) hoặc đặt biến môi trường
-# Ví dụ: truyền biến môi trường trực tiếp trong build
-ARG VITE_API_ENDPOINT
-ENV VITE_API_ENDPOINT=$VITE_API_ENDPOINT
+COPY .env.production ./
 
 # Build ứng dụng với chế độ production
 RUN npm run build -- --mode production
@@ -26,8 +22,5 @@ FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Expose port 80
 EXPOSE 80
-
-# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
