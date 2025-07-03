@@ -13,5 +13,8 @@ router.use("/orders", oderRoutes);
 router.use("/users", userRouter);
 router.use("/shelves", shelfRoutes);
 router.use("/loadcell", loadcellRoutes);
+router.get('/health', (req, res) => {
+  res.status(200).json({ status: 'healthy' });
+});
 
 module.exports = router;
