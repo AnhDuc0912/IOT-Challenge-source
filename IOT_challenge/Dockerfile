@@ -5,10 +5,10 @@ WORKDIR /app
 
 # Copy package.json và package-lock.json để cache dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm cache clean --force && npm install
 
 # Nếu Rollup không cần thiết, bỏ dòng này
-# RUN npm install rollup --save-dev
+RUN npm install rollup --save-dev
 
 # Copy toàn bộ mã nguồn
 COPY . .
