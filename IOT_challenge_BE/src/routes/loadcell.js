@@ -8,5 +8,7 @@ router.get("/", loadcellController.getAllLoadCells);
 router.post("/", loadcellController.createLoadCell);
 router.put("/:id", loadcellController.updateLoadCell);
 router.delete("/:id", loadcellController.deleteLoadCell);
+router.patch("/:id/quantity-threshold", loadcellController.updateQuantityAndThreshold);
+router.patch("/:id/upload-quantity", loadcellController.updateShelfProductQuantity);
 
 module.exports = router;

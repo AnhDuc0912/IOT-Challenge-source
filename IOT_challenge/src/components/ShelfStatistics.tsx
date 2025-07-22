@@ -24,7 +24,7 @@ const ShelfStatistics: React.FC<ShelfStatisticsProps> = ({ shelf, loadCells }) =
           Occupied
         </Typography>
         <Typography variant="h4" color="primary">
-          {loadCells.filter((cell) => cell.product_id !== "").length}
+          {loadCells.filter((cell) => cell.product_id !== "" && cell.product_id !== null).length}
         </Typography>
       </Grid>
       <Grid component="div" size={3}>
@@ -32,7 +32,7 @@ const ShelfStatistics: React.FC<ShelfStatisticsProps> = ({ shelf, loadCells }) =
           Available
         </Typography>
         <Typography variant="h4" color="success.main">
-          {loadCells.filter((cell) => cell.product_id === "").length}
+          {loadCells.filter((cell) => cell.product_id === "" || cell.product_id === null).length}
         </Typography>
       </Grid>
       <Grid component="div" size={3}>

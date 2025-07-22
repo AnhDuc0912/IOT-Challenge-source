@@ -31,6 +31,16 @@ const LoadCellSchema = new mongoose.Schema({
     type: Number,
     required: true,
   }, // cột
+  threshold: {
+    type: Number,
+    required: true,
+    default: 1,
+  }, // ngưỡng hết hàng
+  error: {
+    type: Number,
+    required: true,
+    default: 0,
+  },
 });
 
 module.exports = mongoose.model("LoadCell", LoadCellSchema);

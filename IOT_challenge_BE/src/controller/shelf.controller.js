@@ -79,7 +79,7 @@ exports.getLoadsellByShelfId = async (req, res) => {
     }
 
     const loadCells = await LoadCell.find({ shelf_id: shelfId })
-      .select("load_cell_id load_cell_name product_id quantity floor column")
+      .select("load_cell_id load_cell_name product_id quantity floor column threshold error")
       .lean();
 
     if (!loadCells || loadCells.length === 0) {

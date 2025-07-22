@@ -20,10 +20,16 @@ const ProductSchema = new mongoose.Schema({
   },
   stock: {
     type: Number,
+    required: true,
     default: 0
-  }
+  },
+  weight: {
+    type: Number,
+    required: true,
+    default: 0
+  },
 }, {
   timestamps: true
 });
 
-module.exports = mongoose.model('Product', ProductSchema);
+module.exports = mongoose.model('Product', ProductSchema);  

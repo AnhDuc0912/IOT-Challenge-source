@@ -25,8 +25,6 @@ export interface ShelfCreationData {
   user_id: string;
 }
 
-
-
 export interface LoadCell {
   _id: string;
   load_cell_id: string;
@@ -34,9 +32,12 @@ export interface LoadCell {
   product_id: string | null;
   shelf_id: string;
   quantity: number;
-  floor: number;    // Thêm nếu load cell có vị trí tầng
-  column: number;   // Thêm nếu load cell có vị trí cột
+  floor: number; // Thêm nếu load cell có vị trí tầng
+  column: number;
+  threshold: number;
+  error?: number;
 }
+
 export interface LoadCellResponse {
   shelf: {
     shelf_id: string;

@@ -1,6 +1,10 @@
 import React from "react";
 import { Paper, Typography } from "@mui/material";
 import { LoadCell, Product } from "../types/selfTypes";
+import ShelfItemMenu from "./ShelfItemMenu";
+import ProductDialog from "./ProductDialog";
+import { updateLoadCellThreshold, updateLoadCellQuantity } from "../service/loadcell.service";
+import { WarningAmber } from "@mui/icons-material";
 
 interface ShelfCompartmentProps {
   level: number;
@@ -9,6 +13,7 @@ interface ShelfCompartmentProps {
   handleDragOver: (e: React.DragEvent) => void;
   handleDrop: (e: React.DragEvent, level: number, compartment: number) => void;
   handleRemoveFromShelf: (level: number, compartment: number) => void;
+  onViewProductInfo: (product: Product) => void; // Thêm prop mới
 }
 
 const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
@@ -18,16 +23,90 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
   handleDragOver,
   handleDrop,
   handleRemoveFromShelf,
+  onViewProductInfo, // Thêm prop mới
 }) => {
   const isEmpty = !shelfItem?.product;
-  console.log(shelfItem?.product);
+  const isLoadCellError = !!shelfItem && !!shelfItem.error && shelfItem?.error !== 0;
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [productDialogOpen, setProductDialogOpen] = React.useState(false);
+  const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(
+    null
+  );
+  const [localProduct, setLocalProduct] = React.useState<Product | null>(
+    shelfItem?.product ?? null
+  );
+
+  console.log(shelfItem);
   
+  const [localThreshold, setLocalThreshold] = React.useState<
+    number | undefined
+  >(shelfItem && (shelfItem as any).threshold);
+  const [localQuantity, setLocalQuantity] = React.useState<number | undefined>(shelfItem?.quantity);
+
+  React.useEffect(() => { 
+    setLocalProduct(shelfItem?.product ?? null);
+    setLocalThreshold(shelfItem?.threshold);
+    setLocalQuantity(shelfItem?.quantity);
+  }, [shelfItem?.product, shelfItem]);
+
+  const handleOpenMenu = (event: React.MouseEvent) => {
+    if (!isEmpty) setAnchorEl(event.currentTarget as HTMLElement);
+  };
+  const handleCloseMenu = () => setAnchorEl(null);
+
+  // Các hàm xử lý cho menu
+  const handleRemove = () => handleRemoveFromShelf(level, compartment);
+  const handleViewInfo = () => {
+    if (shelfItem?.product) {
+      onViewProductInfo(shelfItem.product);
+    }
+  };
+  const handleEditPrice = (newPrice: string) => {
+    if (localProduct) {
+      setLocalProduct({ ...localProduct, price: Number(newPrice) });
+    }
+  };
+  const handleChangeThreshold = async (newThreshold: string) => {
+    if (shelfItem) {
+      try {
+        const updated = await updateLoadCellThreshold(
+          shelfItem._id,
+          Number(newThreshold)
+        );
+
+        setLocalThreshold((updated as any).threshold);
+      } catch (err) {
+        alert("Cập nhật ngưỡng thất bại!");
+      }
+    }
+  };
+
+  const handleChangeQuantity = async (newQuantity: string) => {
+    if (shelfItem) {
+      try {
+        const updated = await updateLoadCellQuantity(shelfItem._id, Number(newQuantity));
+        setLocalQuantity(Number(newQuantity));
+      } catch (err) {
+        alert("Cập nhật số lượng thất bại!");
+      }
+    }
+  };
+
+  const handleCloseProductDialog = () => {
+    setProductDialogOpen(false);
+    setSelectedProduct(null);
+  };
+
+  const handleSaveProduct = (productData: any, file?: File) => {
+    // Xử lý lưu sản phẩm nếu cần
+    console.log("Saving product:", productData, file);
+    handleCloseProductDialog();
+  };
 
   return (
     <Paper
-      onDragOver={handleDragOver}
-      onDrop={(e) => handleDrop(e, level, compartment)}
-      onClick={() => !isEmpty && handleRemoveFromShelf(level, compartment)}
+      onDragOver={isLoadCellError ? undefined : handleDragOver}
+      onDrop={isLoadCellError ? undefined : (e) => handleDrop(e, level, compartment)}
       sx={{
         height: 120,
         display: "flex",
@@ -35,49 +114,131 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
         alignItems: "center",
         justifyContent: "center",
         border: "2px dashed",
-        borderColor: isEmpty ? "grey.300" : "primary.main",
+        borderColor: isEmpty ? "grey.300" : isLoadCellError ? "warning.main" : "primary.main",
         backgroundColor: isEmpty ? "grey.50" : "background.paper",
-        cursor: isEmpty ? "default" : "pointer",
+        cursor: isEmpty ? "default" : isLoadCellError ? "not-allowed" : "pointer",
         transition: "all 0.3s ease",
         "&:hover": {
-          borderColor: isEmpty ? "grey.400" : "primary.dark",
+          borderColor: isEmpty ? "grey.400" : isLoadCellError ? "warning.dark" : "primary.dark",
           backgroundColor: isEmpty ? "grey.100" : "grey.50",
         },
+        opacity: isLoadCellError ? 0.7 : 1,
       }}
     >
-      {!shelfItem?.product ? (
+      {!localProduct ? (
         <Typography variant="body2" color="text.secondary">
           Drop here
         </Typography>
       ) : (
-        <>
-          <img
-            src={shelfItem.product!.img_url || "/placeholder.svg"}
-            alt={shelfItem.product!.product_name}
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-end",
+            cursor: isLoadCellError ? "not-allowed" : "pointer",
+            backgroundImage: `url(${localProduct.img_url || "/placeholder.svg"})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            borderRadius: 8,
+            overflow: "hidden",
+          }}
+          onClick={isLoadCellError ? undefined : handleOpenMenu}
+        >
+          {/* Overlay cảnh báo loadcell lỗi */}
+          {isLoadCellError && (
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                background: "rgba(255, 215, 0, 0.5)", // vàng nhạt
+                zIndex: 10,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexDirection: "column",
+              }}
+            >
+              <WarningAmber style={{ fontSize: 48, color: "#FFA000" }} />
+            </div>
+          )}
+          {/* Hiển thị threshold ở góc trái */}
+          {localThreshold !== undefined && (
+            <div
+              style={{
+                position: "absolute",
+                top: 4,
+                left: 4,
+                background: "rgba(255,255,255,0.7)",
+                borderRadius: 4,
+                padding: "2px 6px",
+                zIndex: 3,
+              }}
+            >
+              <Typography variant="caption" color="text.secondary" fontWeight="bold">
+                Threshold: {localThreshold}
+              </Typography>
+            </div>
+          )}
+          <div
             style={{
-              width: 60,
-              height: 60,
-              objectFit: "cover",
-              marginBottom: 4,
+              width: "100%",
+              background: "rgba(0,0,0,0.5)",
+              color: "#fff",
+              padding: 4,
+              fontSize: "16px",
+              textAlign: "center",
             }}
-          />
-          <Typography
-            variant="caption"
-            textAlign="center"
-            noWrap
-            sx={{ maxWidth: "100%" }}
           >
-            {shelfItem.product!.product_name}
-          </Typography>
-          <Typography
-            variant="caption"
-            textAlign="center"
-            color="text.secondary"
-          >
-            Quantity: {shelfItem.quantity}
-          </Typography>
-        </>
+            <Typography
+              variant="caption"
+              noWrap
+              sx={{ width: "100%", fontWeight: "bold" }}
+            >
+              {localProduct.product_name}
+            </Typography>
+            <Typography
+              variant="caption"
+              color="inherit"
+              sx={{ display: "block" }}
+            >
+              Giá:{" "}
+              {localProduct.price
+                ? localProduct.price.toLocaleString() + "₫"
+                : "N/A"}
+            </Typography>
+            <Typography
+              variant="caption"
+              color="inherit"
+              sx={{ display: "block" }}
+            >
+              Quantity: {localQuantity !== undefined ? localQuantity : "N/A"}
+            </Typography>
+          </div>
+        </div>
       )}
+      <ShelfItemMenu
+        anchorEl={anchorEl}
+        onClose={handleCloseMenu}
+        onRemove={handleRemove}
+        onViewInfo={handleViewInfo}
+        onEditPrice={handleEditPrice}
+        onChangeThreshold={handleChangeThreshold}
+        onChangeQuantity={handleChangeQuantity}
+        currentThreshold={localThreshold}
+        currentQuantity={localQuantity}
+      />
+      <ProductDialog
+        open={productDialogOpen}
+        onClose={handleCloseProductDialog}
+        onSave={handleSaveProduct}
+        product={selectedProduct}
+      />
     </Paper>
   );
 };

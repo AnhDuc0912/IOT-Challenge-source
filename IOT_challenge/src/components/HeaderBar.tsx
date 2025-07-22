@@ -16,6 +16,7 @@ import AddIcon from "@mui/icons-material/Add";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
+import NotificationBell from "./NotificationBell";
 
 const HeaderBar: React.FC = () => {
   const [editingShelf, setEditingShelf] = useState<number | null>(null);
@@ -70,6 +71,7 @@ const HeaderBar: React.FC = () => {
             <Box sx={{ ml: "auto" }}>
               {isLoggedIn ? (
                 <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <NotificationBell />
                   <Typography>{user?.fullName}</Typography>
                   <Button
                     color="inherit"

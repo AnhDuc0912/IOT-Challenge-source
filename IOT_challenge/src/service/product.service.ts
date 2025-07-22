@@ -1,16 +1,40 @@
 import axios from "axios";
 import { Product } from "../types/selfTypes";
 const API_URL = import.meta.env.VITE_API_ENDPOINT;
+const IMG_PREFIX = import.meta.env.VITE_PREFIX_IMAGE;
 
 export const fetchProducts = async (): Promise<Product[]> => {
   try {
     const response = await axios.get<Product[]>(`${API_URL}/products`);
-    return response.data;
+    // Gắn prefix cho img_url
+    const productsWithPrefix = response.data.map((product) => ({
+      ...product,
+      img_url: product.img_url.startsWith("http")
+        ? product.img_url
+        : IMG_PREFIX + product.img_url,
+    }));
+    return productsWithPrefix;
   } catch (error) {
     console.error("Error fetching products:", error);
     return [];
   }
 };
+
+export async function getProductById(productId: string): Promise<Product | null> {
+  try {
+    const response = await axios.get<Product>(`${API_URL}/products/${productId}`);
+    const product = response.data;
+    return {
+      ...product,
+      img_url: product.img_url.startsWith("http")
+        ? product.img_url
+        : IMG_PREFIX + product.img_url,
+    };
+  } catch (error) {
+    console.error("Error fetching product by id:", error);
+    return null;
+  }
+}
 
 export async function addProduct(productData: any, file?: File) {
   const form = new FormData();
@@ -34,7 +58,11 @@ export async function addProduct(productData: any, file?: File) {
   }
 }
 
-export async function updateProduct(productId: string, productData: any, file?: File) {
+export async function updateProduct(
+  productId: string,
+  productData: any,
+  file?: File
+) {
   const form = new FormData();
   form.append("product_name", productData.product_name);
   form.append("price", String(productData.price));

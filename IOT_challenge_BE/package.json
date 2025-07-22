@@ -19,7 +19,12 @@
     "mongodb": "^6.17.0",
     "mongoose": "^8.16.0",
     "morgan": "~1.9.1",
-    "multer": "^2.0.1"
+    "multer": "^2.0.1",
+    "socket.io": "^4.8.1",
+    "swagger-autogen": "^2.23.7",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
   },
   "main": "app.js",
   "author": "",
