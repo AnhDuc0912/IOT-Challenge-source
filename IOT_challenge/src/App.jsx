@@ -5,6 +5,7 @@ import UserPage from "./pages/UserPage";
 import ReceiptPage from "./pages/ReceiptPage";
 import LoginPage from "./pages/LoginPage";
 import MainLayout from "./layout/MainLayout";
+import TaskPage from "./pages/TaskPage";
 const apiUrl = import.meta.env.VITE_API_ENDPOINT;
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
           <Route path="/" element={<ShelfInterface />} />
           <Route path="/products" element={<ProductPage />} />
           <Route path="/users" element={<UserPage />} />
+          <Route path="/tasks" element={<TaskPage />} />
           <Route path="/receipts" element={<ReceiptPage />} />
         </Route>
         <Route path="/login" element={<LoginPage />} />

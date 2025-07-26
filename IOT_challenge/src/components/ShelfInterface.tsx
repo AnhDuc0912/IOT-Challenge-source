@@ -29,6 +29,7 @@ import {
   Menu,
   MenuItem,
   Divider,
+  ListItemText,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -53,9 +54,17 @@ import { Product, Shelf, LoadCell } from "../types/selfTypes"; // SỬA: Thêm L
 import AddShelfDialog from "./AddShelfDialog";
 import { updateLoadCell } from "../service/loadcell.service";
 import ProductDialog from "./ProductDialog";
+import TaskDialog from "./TaskDialog";
+import { getEmployees } from "../service/user.service";
+
+interface Employee {
+  id: string;
+  name: string;
+}
 
 export default function ShelfInterface() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [shelves, setShelves] = useState<Shelf[]>([]);
   const [activeShelfId, setActiveShelfId] = useState(
     "685aafc545619025a0bb9f27"
@@ -72,6 +81,7 @@ export default function ShelfInterface() {
   const [loadCells, setLoadCells] = useState<LoadCell[]>([]); // MỚI: Thêm state cho load cells
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
@@ -91,13 +101,23 @@ export default function ShelfInterface() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [products, shelvesData] = await Promise.all([
+        const [products, shelvesData, employeesList] = await Promise.all([
           fetchProducts(),
           fetchShelves(),
+          getEmployees(),
         ]);
         setSampleProducts(products);
         setShelves(shelvesData);
-        console.log("Loaded products:", products); // Debug
+        // Format dữ liệu employee cho đúng interface
+        const formattedEmployees = employeesList.map((emp) => ({
+          id: emp.id,
+          name: `${emp.firstName} ${emp.lastName}`,
+        }));
+        setEmployees(formattedEmployees);
+        console.log("Loaded data:", {
+          products,
+          employees: formattedEmployees,
+        }); // Debug
       } catch (error) {
         console.error("Failed to fetch data:", error);
         alert("Không thể tải dữ liệu sản phẩm hoặc kệ. Vui lòng thử lại.");
@@ -114,7 +134,7 @@ export default function ShelfInterface() {
         try {
           const data = await fetchLoadCellsByShelfId(activeShelfId);
           console.log(data.loadCells);
-          
+
           setLoadCells(data.loadCells);
           console.log("data.loadCells", loadCells);
         } catch (error) {
@@ -169,14 +189,44 @@ export default function ShelfInterface() {
 
   const uploadAllLoadCells = async () => {
     try {
-      await Promise.all(
-        loadCells.map((cell) =>
-          updateLoadCell(cell._id, {
-            product_id: cell.product_id ? cell.product_id : null,
-            quantity: cell.quantity,
-          })
-        )
+      try {
+        await Promise.all(
+          loadCells.map((cell) =>
+            updateLoadCell(cell._id, {
+              product_id: cell.product_id ? cell.product_id : null,
+              quantity: cell.quantity,
+            })
+          )
+        );
+        alert("Upload thành công toàn bộ load cell!");
+      } catch (error) {
+        alert("Có lỗi khi upload load cell!");
+        console.error(error);
+      }
+      // Tạo updatedHistory trước
+      const updatedHistory = loadCells.map((cell) => {
+        const matchedProduct = sampleProducts.find(
+          (p) => p._id === cell.product_id
+        );
+        return {
+          productID: cell.product_id,
+          productName: matchedProduct?.product_name || "", // lấy name từ sampleProducts
+          quantity: cell.quantity,
+          updatedAt: new Date().toISOString(),
+        };
+      });
+
+      // Lọc sampleProducts theo productName từ updatedHistory
+      const filteredProducts = sampleProducts.filter((product) =>
+        updatedHistory.some((history) => history.productID === product._id)
       );
+      
+
+      localStorage.setItem(
+        "loadcellHistory",
+        JSON.stringify([...updatedHistory])
+      );
+
       alert("Upload thành công toàn bộ load cell!");
     } catch (error) {
       alert("Có lỗi khi upload load cell!");
@@ -245,7 +295,7 @@ export default function ShelfInterface() {
       ...loadCell,
       product: product || null,
     };
-  };  
+  };
 
   const handleMenuClose = () => {
     setMenuAnchor(null);
@@ -349,10 +399,10 @@ export default function ShelfInterface() {
       >
         <Box sx={{ p: 2 }}>
           <Typography variant="h6" gutterBottom>
-            Products
+            Hàng hóa
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Drag products to the shelf compartments
+            Kéo thả vào các ô tương ứng ở trên kệ
           </Typography>
           <List sx={{ p: 0 }}>
             {sampleProducts.map((product) => (
@@ -378,6 +428,22 @@ export default function ShelfInterface() {
         }}
       >
         <Container maxWidth="lg">
+          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+            Các mã lỗi:
+          </Typography>
+          <List dense sx={{ pl: 2 }}>
+            <ListItem
+              sx={{ display: "list-item", listStyleType: "disc", py: 0.5 }}
+            >
+              <ListItemText primary="255: lỗi loadcell" />
+            </ListItem>
+            <ListItem
+              sx={{ display: "list-item", listStyleType: "disc", py: 0.5 }}
+            >
+              <ListItemText primary="200, 222: lỗi sản phẩm đặt không đúng vị trí" />
+            </ListItem>
+          </List>
+
           <Box
             sx={{
               display: "flex",
@@ -408,7 +474,7 @@ export default function ShelfInterface() {
                 onClick={handleOpenDialog}
               >
                 <AddIcon />
-                Add Shelf
+                Thêm Kệ
               </Button>
 
               <Button
@@ -416,14 +482,17 @@ export default function ShelfInterface() {
                 color="secondary"
                 onClick={uploadAllLoadCells}
               >
-                Upload All Load Cell
+                Cập nhật
+              </Button>
+              <Button
+                variant="contained"
+                color="success"
+                onClick={() => setTaskDialogOpen(true)}
+              >
+                Giao việc
               </Button>
             </Box>
           </Box>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-            Organize your products across 3 levels with 5 compartments each.
-            Click on placed items to remove them.
-          </Typography>
 
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             {[0, 1, 2].map((level) => (
@@ -471,6 +540,16 @@ export default function ShelfInterface() {
         onClose={handleCloseProductDialog}
         onSave={handleSaveProduct}
         product={selectedProduct}
+      />
+
+      <TaskDialog
+        open={taskDialogOpen}
+        onClose={() => setTaskDialogOpen(false)}
+        onSave={(taskData) => {
+          console.log("Dữ liệu công việc:", taskData);
+          setTaskDialogOpen(false);
+        }}
+        employees={employees}
       />
     </Box>
   );

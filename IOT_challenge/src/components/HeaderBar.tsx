@@ -39,33 +39,43 @@ const HeaderBar: React.FC = () => {
       <AppBar position="fixed">
         <Toolbar>
           <Box sx={{ flexGrow: 1, display: "flex", alignItems: "center" }}>
-          <Button
+            <Button
               color="inherit"
               onClick={() => navigate("/")}
               sx={{ ml: 2 }}
             >
-              Manage Shelves
+              Quản lý kệ
             </Button>
             <Button
               color="inherit"
               onClick={() => navigate("/products")}
               sx={{ ml: 2 }}
             >
-              Manage Products
+              Sản phẩm
             </Button>
-            <Button
-              color="inherit"
-              onClick={() => navigate("/users")}
-              sx={{ ml: 2 }}
-            >
-              Manage Users
-            </Button>
+
             <Button
               color="inherit"
               onClick={() => navigate("/receipts")}
               sx={{ ml: 2 }}
             >
-              Manage Receipts
+              Hóa đơn
+            </Button>
+
+            <Button
+              color="inherit"
+              onClick={() => navigate("/users")}
+              sx={{ ml: 2 }}
+            >
+              Nhân sự
+            </Button>
+
+            <Button
+              color="inherit"
+              onClick={() => navigate("/tasks")}
+              sx={{ ml: 2 }}
+            >
+              Công việc
             </Button>
 
             <Box sx={{ ml: "auto" }}>
@@ -80,7 +90,7 @@ const HeaderBar: React.FC = () => {
                     }}
                     sx={{ ml: 2 }}
                   >
-                    Logout
+                    Đăng xuất
                   </Button>
                 </Box>
               ) : (
@@ -89,16 +99,16 @@ const HeaderBar: React.FC = () => {
                   onClick={() => navigate("/login")}
                   sx={{ ml: 2 }}
                 >
-                  Login
+                  Đăng nhập
                 </Button>
               )}
             </Box>
           </Box>
         </Toolbar>
       </AppBar>
-      <Box sx={{ 
+      <Box sx={{
         pt: "64px"
-       }}/>
+      }} />
     </>
   );
 };

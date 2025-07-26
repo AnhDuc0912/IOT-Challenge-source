@@ -7,6 +7,7 @@ const oderRoutes = require("./oder");
 const shelfRoutes = require("./shelf");
 const loadcellRoutes = require("./loadcell");
 const notificationRoutes = require("./notification");
+const taskRoutes = require("./task");
 
 // Gắn các route con vào router chính
 router.use("/products", productRoutes);
@@ -15,8 +16,12 @@ router.use("/users", userRouter);
 router.use("/shelves", shelfRoutes);
 router.use("/loadcell", loadcellRoutes);
 router.use("/notifications", notificationRoutes);
+router.use("/tasks", taskRoutes);
+
 router.get('/health', (req, res) => {
-  res.status(200).json({ status: 'healthy' });
+  res.status(200).json({
+    status: 'healthy'
+  });
 });
 
 module.exports = router;

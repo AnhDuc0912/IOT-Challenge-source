@@ -30,6 +30,7 @@ export interface LoadCell {
   load_cell_id: string;
   load_cell_name: string;
   product_id: string | null;
+  product_name: string;
   shelf_id: string;
   quantity: number;
   floor: number; // Thêm nếu load cell có vị trí tầng

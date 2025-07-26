@@ -63,21 +63,7 @@ import {
   CheckCircle as CheckCircleIcon,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  role: "Admin" | "Manager" | "Employee" | "Viewer";
-  status: "Active" | "Inactive" | "Suspended";
-  avatar?: string;
-  department?: string;
-  joinDate: Date;
-  lastLogin?: Date;
-  permissions: string[];
-}
+import { getUsers, User } from "../service/user.service";
 
 const roles = ["Admin", "Manager", "Employee", "Viewer"];
 const departments = [
@@ -97,93 +83,10 @@ const availablePermissions = [
   "system_settings",
 ];
 
-const initialUsers: User[] = [
-  {
-    id: "1",
-    firstName: "John",
-    lastName: "Doe",
-    email: "john.doe@company.com",
-    phone: "+1 (555) 123-4567",
-    role: "Admin",
-    status: "Active",
-    avatar: "/placeholder.svg?height=100&width=100",
-    department: "IT",
-    joinDate: new Date(2023, 0, 15),
-    lastLogin: new Date(2024, 11, 10),
-    permissions: [
-      "manage_shelves",
-      "manage_products",
-      "manage_users",
-      "view_analytics",
-      "export_data",
-      "system_settings",
-    ],
-  },
-  {
-    id: "2",
-    firstName: "Jane",
-    lastName: "Smith",
-    email: "jane.smith@company.com",
-    phone: "+1 (555) 234-5678",
-    role: "Manager",
-    status: "Active",
-    avatar: "/placeholder.svg?height=100&width=100",
-    department: "Operations",
-    joinDate: new Date(2023, 2, 20),
-    lastLogin: new Date(2024, 11, 9),
-    permissions: [
-      "manage_shelves",
-      "manage_products",
-      "view_analytics",
-      "export_data",
-    ],
-  },
-  {
-    id: "3",
-    firstName: "Mike",
-    lastName: "Johnson",
-    email: "mike.johnson@company.com",
-    phone: "+1 (555) 345-6789",
-    role: "Employee",
-    status: "Active",
-    avatar: "/placeholder.svg?height=100&width=100",
-    department: "Warehouse",
-    joinDate: new Date(2023, 5, 10),
-    lastLogin: new Date(2024, 11, 8),
-    permissions: ["manage_shelves", "manage_products"],
-  },
-  {
-    id: "4",
-    firstName: "Sarah",
-    lastName: "Wilson",
-    email: "sarah.wilson@company.com",
-    phone: "+1 (555) 456-7890",
-    role: "Employee",
-    status: "Inactive",
-    avatar: "/placeholder.svg?height=100&width=100",
-    department: "Warehouse",
-    joinDate: new Date(2023, 8, 5),
-    lastLogin: new Date(2024, 10, 15),
-    permissions: ["manage_shelves"],
-  },
-  {
-    id: "5",
-    firstName: "David",
-    lastName: "Brown",
-    email: "david.brown@company.com",
-    role: "Viewer",
-    status: "Active",
-    department: "Sales",
-    joinDate: new Date(2024, 1, 12),
-    lastLogin: new Date(2024, 11, 7),
-    permissions: ["view_analytics"],
-  },
-];
-
 export default function UserManagement() {
   const navigate = useNavigate();
-  const [users, setUsers] = useState<User[]>(initialUsers);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>(initialUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("");
@@ -431,6 +334,36 @@ export default function UserManagement() {
         return <PersonIcon />;
     }
   };
+
+  // Lấy dữ liệu user từ API khi component mount
+  useEffect(() => {
+    getUsers()
+      .then((data) => {
+        // Đảm bảo dữ liệu đúng interface User
+        const userList: User[] = data.map((u: any) => ({
+          id: u.id,
+          firstName: u.firstName,
+          lastName: u.lastName,
+          email: u.email,
+          phone: u.phone,
+          role: u.role,
+          status: u.status,
+          avatar: u.avatar,
+          department: u.department,
+          joinDate: u.joinDate ? new Date(u.joinDate) : new Date(),
+          lastLogin: u.lastLogin ? new Date(u.lastLogin) : undefined,
+          permissions: Array.isArray(u.permissions) ? u.permissions : [],
+        }));
+        setUsers(userList);
+      })
+      .catch(() => {
+        setSnackbar({
+          open: true,
+          message: "Không thể tải danh sách người dùng",
+          severity: "error",
+        });
+      });
+  }, []);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>

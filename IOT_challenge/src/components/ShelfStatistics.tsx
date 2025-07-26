@@ -10,18 +10,18 @@ interface ShelfStatisticsProps {
 const ShelfStatistics: React.FC<ShelfStatisticsProps> = ({ shelf, loadCells }) => (
   <Paper sx={{ mt: 4, p: 2 }}>
     <Typography variant="h6" gutterBottom>
-      Shelf Statistics - {shelf?.shelf_name || "Unknown Shelf"}
+      Thông tin - {shelf?.shelf_name || "Unknown Shelf"}
     </Typography>
     <Grid container spacing={2}>
       <Grid component="div" size={3}>
         <Typography variant="body2" color="text.secondary">
-          Total Compartments
+          Tổng ô
         </Typography>
         <Typography variant="h4">15</Typography>
       </Grid>
       <Grid component="div" size={3}>
         <Typography variant="body2" color="text.secondary">
-          Occupied
+          Có hàng
         </Typography>
         <Typography variant="h4" color="primary">
           {loadCells.filter((cell) => cell.product_id !== "" && cell.product_id !== null).length}
@@ -29,7 +29,7 @@ const ShelfStatistics: React.FC<ShelfStatisticsProps> = ({ shelf, loadCells }) =
       </Grid>
       <Grid component="div" size={3}>
         <Typography variant="body2" color="text.secondary">
-          Available
+          Trống
         </Typography>
         <Typography variant="h4" color="success.main">
           {loadCells.filter((cell) => cell.product_id === "" || cell.product_id === null).length}
@@ -37,7 +37,7 @@ const ShelfStatistics: React.FC<ShelfStatisticsProps> = ({ shelf, loadCells }) =
       </Grid>
       <Grid component="div" size={3}>
         <Typography variant="body2" color="text.secondary">
-          Occupancy Rate
+          Tỉ lệ infill
         </Typography>
         <Typography variant="h4" color="warning.main">
           {Math.round((loadCells.filter((cell) => cell.product_id !== "").length / 15) * 100)}%

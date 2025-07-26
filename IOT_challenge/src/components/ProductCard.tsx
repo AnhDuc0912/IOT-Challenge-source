@@ -36,7 +36,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, handleDragStart }) =
         sx={{ mt: 0.5, fontSize: "0.7rem" }}
       />
       <Typography variant="body2" color="primary" fontWeight="bold">
-        ${product.price}
+        {product.price}đ
       </Typography>
     </CardContent>
   </Card>

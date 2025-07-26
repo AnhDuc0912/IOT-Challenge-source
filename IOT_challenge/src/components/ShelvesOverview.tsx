@@ -15,7 +15,7 @@ const ShelvesOverview: React.FC<ShelvesOverviewProps> = ({
 }) => (
   <Paper sx={{ mt: 2, p: 2 }}>
     <Typography variant="h6" gutterBottom>
-      All Shelves Overview
+      Tất cả kệ hàng  
     </Typography>
     <Grid container spacing={2}>
       {shelves.map((shelf) => (
@@ -37,7 +37,7 @@ const ShelvesOverview: React.FC<ShelvesOverviewProps> = ({
               {shelf.items.filter((item) => item.product !== null).length}/15 occupied
             </Typography> */}
             <Typography variant="caption" color="text.secondary">
-              Created: {new Date(shelf.createdAt).getTime()}
+              Ngày & giờ tạo: {new Date(shelf.createdAt).getTime()}
             </Typography>
           </Paper>
         </Grid>

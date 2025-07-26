@@ -1,9 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { Paper, Typography } from "@mui/material";
 import { LoadCell, Product } from "../types/selfTypes";
 import ShelfItemMenu from "./ShelfItemMenu";
 import ProductDialog from "./ProductDialog";
-import { updateLoadCellThreshold, updateLoadCellQuantity } from "../service/loadcell.service";
+import {
+  updateLoadCellThreshold,
+  updateLoadCellQuantity,
+} from "../service/loadcell.service";
 import { WarningAmber } from "@mui/icons-material";
 
 interface ShelfCompartmentProps {
@@ -26,7 +29,8 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
   onViewProductInfo, // Thêm prop mới
 }) => {
   const isEmpty = !shelfItem?.product;
-  const isLoadCellError = !!shelfItem && !!shelfItem.error && shelfItem?.error !== 0;
+  const isLoadCellError =
+    !!shelfItem && !!shelfItem.error && shelfItem?.error !== 0;
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [productDialogOpen, setProductDialogOpen] = React.useState(false);
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(
@@ -37,13 +41,15 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
   );
 
   console.log(shelfItem);
-  
+
   const [localThreshold, setLocalThreshold] = React.useState<
     number | undefined
   >(shelfItem && (shelfItem as any).threshold);
-  const [localQuantity, setLocalQuantity] = React.useState<number | undefined>(shelfItem?.quantity);
+  const [localQuantity, setLocalQuantity] = React.useState<number | undefined>(
+    shelfItem?.quantity
+  );
 
-  React.useEffect(() => { 
+  React.useEffect(() => {
     setLocalProduct(shelfItem?.product ?? null);
     setLocalThreshold(shelfItem?.threshold);
     setLocalQuantity(shelfItem?.quantity);
@@ -84,7 +90,10 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
   const handleChangeQuantity = async (newQuantity: string) => {
     if (shelfItem) {
       try {
-        const updated = await updateLoadCellQuantity(shelfItem._id, Number(newQuantity));
+        const updated = await updateLoadCellQuantity(
+          shelfItem._id,
+          Number(newQuantity)
+        );
         setLocalQuantity(Number(newQuantity));
       } catch (err) {
         alert("Cập nhật số lượng thất bại!");
@@ -106,20 +115,42 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
   return (
     <Paper
       onDragOver={isLoadCellError ? undefined : handleDragOver}
-      onDrop={isLoadCellError ? undefined : (e) => handleDrop(e, level, compartment)}
+      onDrop={
+        isLoadCellError ? undefined : (e) => handleDrop(e, level, compartment)
+      }
       sx={{
         height: 120,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        border: "2px dashed",
-        borderColor: isEmpty ? "grey.300" : isLoadCellError ? "warning.main" : "primary.main",
+        border: "4px dashed",
+        borderColor: isEmpty
+          ? "grey.300"
+          : isLoadCellError
+          ? "warning.main"
+          : localQuantity === 0
+          ? "error.main"
+          : localQuantity && localThreshold && localQuantity < localThreshold
+          ? "warning.main"
+          : "primary.main",
         backgroundColor: isEmpty ? "grey.50" : "background.paper",
-        cursor: isEmpty ? "default" : isLoadCellError ? "not-allowed" : "pointer",
+        cursor: isEmpty
+          ? "default"
+          : isLoadCellError
+          ? "not-allowed"
+          : "pointer",
         transition: "all 0.3s ease",
         "&:hover": {
-          borderColor: isEmpty ? "grey.400" : isLoadCellError ? "warning.dark" : "primary.dark",
+          borderColor: isEmpty
+            ? "grey.400"
+            : isLoadCellError
+            ? "warning.dark"
+            : localQuantity === 0
+            ? "error.dark"
+            : localQuantity && localThreshold && localQuantity < localThreshold
+            ? "warning.dark"
+            : "primary.dark",
           backgroundColor: isEmpty ? "grey.100" : "grey.50",
         },
         opacity: isLoadCellError ? 0.7 : 1,
@@ -139,7 +170,9 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
             flexDirection: "column",
             justifyContent: "flex-end",
             cursor: isLoadCellError ? "not-allowed" : "pointer",
-            backgroundImage: `url(${localProduct.img_url || "/placeholder.svg"})`,
+            backgroundImage: `url(${
+              localProduct.img_url || "/placeholder.svg"
+            })`,
             backgroundSize: "cover",
             backgroundPosition: "center",
             borderRadius: 8,
@@ -159,12 +192,15 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
                 background: "rgba(255, 215, 0, 0.5)", // vàng nhạt
                 zIndex: 10,
                 display: "flex",
+                
                 alignItems: "center",
                 justifyContent: "center",
                 flexDirection: "column",
               }}
             >
-              <WarningAmber style={{ fontSize: 48, color: "#FFA000" }} />
+              <Typography fontWeight="700" fontSize="30px" color="#000">
+                {shelfItem.error}
+              </Typography>
             </div>
           )}
           {/* Hiển thị threshold ở góc trái */}
@@ -180,7 +216,11 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
                 zIndex: 3,
               }}
             >
-              <Typography variant="caption" color="text.secondary" fontWeight="bold">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                fontWeight="bold"
+              >
                 Threshold: {localThreshold}
               </Typography>
             </div>
