@@ -3,7 +3,7 @@ name: Build and Push Docker Image
 on:
   push:
     branches:
-      - main  # hoặc branch bạn dùng
+      - main
 
 jobs:
   build-and-push:
@@ -21,8 +21,8 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/your-image-name:latest .
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/iot-challenge-source:${{ github.sha }} .
 
       - name: Push to DockerHub
         run: |
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/your-image-name:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/iot-challenge-source:${{ github.sha }}
