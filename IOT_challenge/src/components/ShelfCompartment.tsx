@@ -12,6 +12,7 @@ import { WarningAmber } from "@mui/icons-material";
 interface ShelfCompartmentProps {
   level: number;
   compartment: number;
+  quantity: number;
   shelfItem: (LoadCell & { product: Product | null }) | null;
   handleDragOver: (e: React.DragEvent) => void;
   handleDrop: (e: React.DragEvent, level: number, compartment: number) => void;
@@ -21,6 +22,7 @@ interface ShelfCompartmentProps {
 
 const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
   level,
+  quantity,
   compartment,
   shelfItem,
   handleDragOver,
@@ -40,8 +42,6 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
     shelfItem?.product ?? null
   );
 
-  console.log(shelfItem);
-
   const [localThreshold, setLocalThreshold] = React.useState<
     number | undefined
   >(shelfItem && (shelfItem as any).threshold);
@@ -54,6 +54,11 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
     setLocalThreshold(shelfItem?.threshold);
     setLocalQuantity(shelfItem?.quantity);
   }, [shelfItem?.product, shelfItem]);
+
+  // Đồng bộ localQuantity với prop quantity (realtime từ cha)
+  React.useEffect(() => {
+    setLocalQuantity(quantity);
+  }, [quantity]);
 
   const handleOpenMenu = (event: React.MouseEvent) => {
     if (!isEmpty) setAnchorEl(event.currentTarget as HTMLElement);

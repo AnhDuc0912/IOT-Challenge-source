@@ -5,21 +5,11 @@ import { useState } from "react";
 import {
   Box,
   Grid,
-  Paper,
   Typography,
   Drawer,
   List,
   ListItem,
-  Card,
-  CardContent,
-  CardMedia,
-  Chip,
   Container,
-  AppBar,
-  Toolbar,
-  IconButton,
-  Tabs,
-  Tab,
   Button,
   Dialog,
   DialogTitle,
@@ -56,6 +46,8 @@ import { updateLoadCell } from "../service/loadcell.service";
 import ProductDialog from "./ProductDialog";
 import TaskDialog from "./TaskDialog";
 import { getEmployees } from "../service/user.service";
+import MqttMessageViewer from "./MqttMessageViewer";
+import mqtt from "mqtt";
 
 interface Employee {
   id: string;
@@ -82,6 +74,7 @@ export default function ShelfInterface() {
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [realtimeQuantities, setRealtimeQuantities] = useState<number[]>([]);
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
@@ -145,6 +138,31 @@ export default function ShelfInterface() {
     fetchLoadCells();
   }, [activeShelfId]);
 
+  // Thêm useEffect để kết nối MQTT
+  useEffect(() => {
+    const MQTT_BROKER = "ws://broker.hivemq.com:8000/mqtt";
+    const TOPIC = "shelf/loadcell/quantity";
+    const client = mqtt.connect(MQTT_BROKER);
+
+    client.on("connect", () => {
+      client.subscribe(TOPIC);
+    });
+
+    client.on("message", (topic, payload) => {
+      try {
+        const arr = JSON.parse(payload.toString());
+        setRealtimeQuantities(arr.values);
+        
+      } catch (e) { }
+    });
+    
+    
+    return () => {
+      client.end();
+    };
+  }, []);
+  console.log(realtimeQuantities);
+  
   const activeShelf: Shelf | undefined = shelves.find(
     (shelf) => shelf._id === activeShelfId
   );
@@ -172,7 +190,7 @@ export default function ShelfInterface() {
       if (activeShelfId === shelfId) {
         setActiveShelfId(
           shelves.find((shelf) => shelf.shelf_id !== shelfId)?.shelf_id ||
-            shelves[0].shelf_id
+          shelves[0].shelf_id
         );
       }
     }
@@ -220,7 +238,7 @@ export default function ShelfInterface() {
       const filteredProducts = sampleProducts.filter((product) =>
         updatedHistory.some((history) => history.productID === product._id)
       );
-      
+
 
       localStorage.setItem(
         "loadcellHistory",
@@ -428,6 +446,7 @@ export default function ShelfInterface() {
         }}
       >
         <Container maxWidth="lg">
+          {/* <MqttMessageViewer /> */}
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             Các mã lỗi:
           </Typography>
@@ -498,19 +517,33 @@ export default function ShelfInterface() {
             {[0, 1, 2].map((level) => (
               <Box key={level}>
                 <Grid container spacing={2}>
-                  {[0, 1, 2, 3, 4].map((compartment, index) => (
-                    <Grid component="div" size={2.4} key={index}>
-                      <ShelfCompartment
-                        level={level}
-                        compartment={compartment}
-                        shelfItem={getShelfItem(level, compartment)}
-                        handleDragOver={handleDragOver}
-                        handleDrop={handleDrop}
-                        handleRemoveFromShelf={handleRemoveFromShelf}
-                        onViewProductInfo={handleViewProductInfo}
-                      />
-                    </Grid>
-                  ))}
+                  {[0, 1, 2, 3, 4].map((compartment, index) => {
+                    const cellIndex = level * 5 + compartment;
+                    const cell = loadCells.find(
+                      (c) => c.floor === level + 1 && c.column === compartment + 1
+                    );
+                    const quantity =
+                      realtimeQuantities[cellIndex] !== undefined
+                        ? realtimeQuantities[cellIndex]
+                        : cell?.quantity ?? 0;
+
+                    console.log(realtimeQuantities);
+
+                    return (
+                      <Grid component="div" size={2.4} key={index}>
+                        <ShelfCompartment
+                          level={level}
+                          quantity={quantity}
+                          compartment={compartment}
+                          shelfItem={getShelfItem(level, compartment)}
+                          handleDragOver={handleDragOver}
+                          handleDrop={handleDrop}
+                          handleRemoveFromShelf={handleRemoveFromShelf}
+                          onViewProductInfo={handleViewProductInfo}
+                        />
+                      </Grid>
+                    );
+                  })}
                 </Grid>
               </Box>
             ))}
