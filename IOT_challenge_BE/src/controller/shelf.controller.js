@@ -78,8 +78,9 @@ exports.getLoadsellByShelfId = async (req, res) => {
       });
     }
 
+    // Lấy tất cả trường và populate product_id
     const loadCells = await LoadCell.find({ shelf_id: shelfId })
-      .select("load_cell_id load_cell_name product_id quantity floor column threshold error")
+      .populate("product_id") // Lấy đầy đủ thông tin sản phẩm
       .lean();
 
     if (!loadCells || loadCells.length === 0) {
