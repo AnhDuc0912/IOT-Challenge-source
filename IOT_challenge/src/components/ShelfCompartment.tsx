@@ -50,6 +50,8 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
   );
 
   React.useEffect(() => {
+    console.log(shelfItem);
+    
     setLocalProduct(shelfItem?.product ?? null);
     setLocalThreshold(shelfItem?.threshold);
     setLocalQuantity(shelfItem?.quantity);

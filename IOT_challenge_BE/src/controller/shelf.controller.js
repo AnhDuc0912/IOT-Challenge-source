@@ -79,8 +79,10 @@ exports.getLoadsellByShelfId = async (req, res) => {
     }
 
     // Lấy tất cả trường và populate product_id
-    const loadCells = await LoadCell.find({ shelf_id: shelfId })
-      .populate("product_id") // Lấy đầy đủ thông tin sản phẩm
+    const loadCells = await LoadCell.find({
+        shelf_id: shelfId
+      })
+      .select("_id load_cell_id load_cell_name product_id product_name shelf_id quantity floor column threshold error")
       .lean();
 
     if (!loadCells || loadCells.length === 0) {

@@ -46,8 +46,7 @@ import { updateLoadCell } from "../service/loadcell.service";
 import ProductDialog from "./ProductDialog";
 import TaskDialog from "./TaskDialog";
 import { getEmployees } from "../service/user.service";
-import MqttMessageViewer from "./MqttMessageViewer";
-import mqtt from "mqtt";
+import { Client } from "paho-mqtt";
 
 interface Employee {
   id: string;
@@ -100,6 +99,7 @@ export default function ShelfInterface() {
           getEmployees(),
         ]);
         setSampleProducts(products);
+        
         setShelves(shelvesData);
         // Format dữ liệu employee cho đúng interface
         const formattedEmployees = employeesList.map((emp) => ({
@@ -140,29 +140,52 @@ export default function ShelfInterface() {
 
   // Thêm useEffect để kết nối MQTT
   useEffect(() => {
-    const MQTT_BROKER = "ws://broker.hivemq.com:8000/mqtt";
-    const TOPIC = "shelf/loadcell/quantity";
-    const client = mqtt.connect(MQTT_BROKER);
+    const client = new Client(
+      "broker.hivemq.com",
+      8000,
+      "/mqtt",
+      "webclient-" + Math.random().toString(16).substr(2, 8)
+    );
 
-    client.on("connect", () => {
-      client.subscribe(TOPIC);
-    });
-
-    client.on("message", (topic, payload) => {
-      try {
-        const arr = JSON.parse(payload.toString());
-        setRealtimeQuantities(arr.values);
-        
-      } catch (e) { }
-    });
-    
-    
-    return () => {
-      client.end();
+    // Kết nối thành công
+    client.onConnectionLost = (responseObject) => {
+      if (responseObject.errorCode !== 0) {
+        console.log("Connection lost:", responseObject.errorMessage);
+      }
     };
-  }, []);
+
+    // Nhận message
+    client.onMessageArrived = (message) => {
+      try {
+        const arr = JSON.parse(message.payloadString);
+        setRealtimeQuantities(arr.values);
+      } catch (e) {
+        console.error("Invalid message format:", e);
+      }
+    };
+
+    // Kết nối tới broker
+    client.connect({
+      onSuccess: () => {
+        console.log("Connected to MQTT broker");
+        client.subscribe("shelf/loadcell/quantity");
+      },
+      useSSL: false,
+      onFailure: (err) => {
+        console.error("MQTT Connection failed:", err);
+      },
+    });
+
+    // Cleanup khi component unmount
+    return () => {
+      if (client.isConnected()) {
+        client.disconnect();
+      }
+    };
+  }, [realtimeQuantities]);
+
   console.log(realtimeQuantities);
-  
+
   const activeShelf: Shelf | undefined = shelves.find(
     (shelf) => shelf._id === activeShelfId
   );
@@ -306,8 +329,9 @@ export default function ShelfInterface() {
       (cell) => cell.floor === level + 1 && cell.column === compartment + 1
     );
     if (!loadCell) return null;
-
+    
     let product = sampleProducts.find((p) => p._id === loadCell.product_id);
+      
 
     return {
       ...loadCell,
@@ -527,7 +551,7 @@ export default function ShelfInterface() {
                         ? realtimeQuantities[cellIndex]
                         : cell?.quantity ?? 0;
 
-                    console.log(realtimeQuantities);
+                    console.log(getShelfItem(level, compartment));
 
                     return (
                       <Grid component="div" size={2.4} key={index}>
