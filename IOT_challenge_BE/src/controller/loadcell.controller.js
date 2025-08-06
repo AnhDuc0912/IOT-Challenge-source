@@ -33,13 +33,38 @@ exports.createLoadCell = async (req, res) => {
 // PUT update
 exports.updateLoadCell = async (req, res) => {
   try {
-    const updated = await LoadCell.findByIdAndUpdate(req.params.id, req.body, {
+    const {
+      product_id,
+      ...otherFields
+    } = req.body;
+
+    // Lấy thông tin loadcell hiện tại
+    const loadCell = await LoadCell.findById(req.params.id);
+    if (!loadCell) {
+      return res.status(404).json({
+        error: "LoadCell not found"
+      });
+    }
+
+    // Cập nhật previous_product_id thành giá trị hiện tại của product_id
+    const updateData = {
+      ...otherFields,
+      previous_product_id: loadCell.product_id || null, // Lưu giá trị cũ của product_id
+      product_id: product_id || loadCell.product_id, // Cập nhật product_id từ request body
+    };
+
+    
+
+    // Cập nhật loadcell
+    const updated = await LoadCell.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
     });
+
     res.json(updated);
   } catch (err) {
+    console.error("Error updating load cell:", err);
     res.status(400).json({
-      error: "Update failed",
+      error: "Update failed"
     });
   }
 };

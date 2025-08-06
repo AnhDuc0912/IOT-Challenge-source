@@ -7,7 +7,6 @@ import {
   updateLoadCellThreshold,
   updateLoadCellQuantity,
 } from "../service/loadcell.service";
-import { WarningAmber } from "@mui/icons-material";
 
 interface ShelfCompartmentProps {
   level: number;
@@ -31,13 +30,13 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
   onViewProductInfo, // Thêm prop mới
 }) => {
   const isEmpty = !shelfItem?.product;
-  const isLoadCellError =
-    !!shelfItem && !!shelfItem.error && shelfItem?.error !== 0;
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [productDialogOpen, setProductDialogOpen] = React.useState(false);
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(
     null
   );
+
+  const [isLoadCellError, setIsLoadCellError] = React.useState(0);
   const [localProduct, setLocalProduct] = React.useState<Product | null>(
     shelfItem?.product ?? null
   );
@@ -51,7 +50,7 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
 
   React.useEffect(() => {
     console.log(shelfItem);
-    
+
     setLocalProduct(shelfItem?.product ?? null);
     setLocalThreshold(shelfItem?.threshold);
     setLocalQuantity(shelfItem?.quantity);
@@ -60,6 +59,13 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
   // Đồng bộ localQuantity với prop quantity (realtime từ cha)
   React.useEffect(() => {
     setLocalQuantity(quantity);
+
+    // Kiểm tra lỗi loadcell
+    if (quantity === 200 || quantity === 222 || quantity === 255) {
+      setIsLoadCellError(quantity);
+    } else {
+      setIsLoadCellError(0); // Reset lỗi nếu không phải các mã lỗi
+    }
   }, [quantity]);
 
   const handleOpenMenu = (event: React.MouseEvent) => {
@@ -135,29 +141,29 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
         borderColor: isEmpty
           ? "grey.300"
           : isLoadCellError
-          ? "warning.main"
-          : localQuantity === 0
-          ? "error.main"
-          : localQuantity && localThreshold && localQuantity < localThreshold
-          ? "warning.main"
-          : "primary.main",
+            ? "warning.main"
+            : localQuantity === 0
+              ? "error.main"
+              : localQuantity && localThreshold && localQuantity < localThreshold
+                ? "warning.main"
+                : "primary.main",
         backgroundColor: isEmpty ? "grey.50" : "background.paper",
         cursor: isEmpty
           ? "default"
           : isLoadCellError
-          ? "not-allowed"
-          : "pointer",
+            ? "not-allowed"
+            : "pointer",
         transition: "all 0.3s ease",
         "&:hover": {
           borderColor: isEmpty
             ? "grey.400"
             : isLoadCellError
-            ? "warning.dark"
-            : localQuantity === 0
-            ? "error.dark"
-            : localQuantity && localThreshold && localQuantity < localThreshold
-            ? "warning.dark"
-            : "primary.dark",
+              ? "warning.dark"
+              : localQuantity === 0
+                ? "error.dark"
+                : localQuantity && localThreshold && localQuantity < localThreshold
+                  ? "warning.dark"
+                  : "primary.dark",
           backgroundColor: isEmpty ? "grey.100" : "grey.50",
         },
         opacity: isLoadCellError ? 0.7 : 1,
@@ -177,9 +183,8 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
             flexDirection: "column",
             justifyContent: "flex-end",
             cursor: isLoadCellError ? "not-allowed" : "pointer",
-            backgroundImage: `url(${
-              localProduct.img_url || "/placeholder.svg"
-            })`,
+            backgroundImage: `url(${localProduct.img_url || "/placeholder.svg"
+              })`,
             backgroundSize: "cover",
             backgroundPosition: "center",
             borderRadius: 8,
@@ -199,14 +204,14 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
                 background: "rgba(255, 215, 0, 0.5)", // vàng nhạt
                 zIndex: 10,
                 display: "flex",
-                
+
                 alignItems: "center",
                 justifyContent: "center",
                 flexDirection: "column",
               }}
             >
               <Typography fontWeight="700" fontSize="30px" color="#000">
-                {shelfItem.error}
+                {isLoadCellError}
               </Typography>
             </div>
           )}
@@ -264,7 +269,7 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
               color="inherit"
               sx={{ display: "block" }}
             >
-              Quantity: {localQuantity !== undefined ? localQuantity : "N/A"}
+              Số lượng: {localQuantity !== undefined ? localQuantity : "N/A"}
             </Typography>
           </div>
         </div>

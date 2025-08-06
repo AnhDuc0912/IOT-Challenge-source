@@ -13,6 +13,10 @@ const LoadCellSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Product",
   },
+  previous_product_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Product",
+  },
   shelf_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Shelf",

@@ -82,7 +82,7 @@ exports.getLoadsellByShelfId = async (req, res) => {
     const loadCells = await LoadCell.find({
         shelf_id: shelfId
       })
-      .select("_id load_cell_id load_cell_name product_id product_name shelf_id quantity floor column threshold error")
+      .select("_id load_cell_id load_cell_name product_id previous_product_id product_name shelf_id quantity floor column threshold error")
       .lean();
 
     if (!loadCells || loadCells.length === 0) {
@@ -135,6 +135,50 @@ exports.deleteShelf = async (req, res) => {
   } catch (err) {
     res.status(500).json({
       error: "Failed to delete shelf",
+    });
+  }
+};
+
+// Lấy danh sách sản phẩm trên load cell theo Shelf ID
+exports.getProductsByShelfId = async (req, res) => {
+  try {
+    const shelfId = req.params.shelfId;
+
+    // Kiểm tra xem kệ có tồn tại không
+    const shelf = await Shelf.findById(shelfId);
+    if (!shelf) {
+      return res.status(404).json({
+        error: "Shelf not found",
+        message: `Shelf with ID ${shelfId} does not exist.`,
+      });
+    }
+
+    // Lấy danh sách sản phẩm từ load cells
+    const loadCells = await LoadCell.find({ shelf_id: shelfId })
+      .select("product_id product_name quantity")
+      .lean();
+
+    // Lọc các load cell có sản phẩm (product_id không null hoặc rỗng)
+    const products = loadCells
+      .filter((cell) => cell.product_id)
+      .map((cell) => ({
+        product_id: cell.product_id,
+        product_name: cell.product_name,
+        quantity: cell.quantity,
+      }));
+
+    res.status(200).json({
+      shelf: {
+        shelf_id: shelf.shelf_id,
+        _id: shelf._id,
+      },
+      products,
+      message: "Products retrieved successfully.",
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to fetch products",
+      message: err.message,
     });
   }
 };
