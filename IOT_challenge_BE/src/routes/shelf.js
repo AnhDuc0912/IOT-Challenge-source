@@ -12,4 +12,4 @@ router.get("/get-loadcell/:shelfId", shelfController.getLoadsellByShelfId);
 // Lấy danh sách sản phẩm trên load cell theo Shelf ID
 router.get("/get-products/:shelfId", shelfController.getProductsByShelfId);
 
-module.exports = router;
+module.exports = router

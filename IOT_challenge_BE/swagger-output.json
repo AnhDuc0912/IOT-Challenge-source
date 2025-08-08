@@ -444,6 +444,115 @@
         }
       }
     },
+    "/api/shelves/get-products/{shelfId}": {
+      "get": {
+        "description": "Lấy danh sách sản phẩm trên load cell theo Shelf ID",
+        "parameters": [
+          {
+            "name": "shelfId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID của kệ cần lấy danh sách sản phẩm"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lấy danh sách sản phẩm thành công",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "shelf": {
+                  "type": "object",
+                  "properties": {
+                    "shelf_id": {
+                      "type": "string",
+                      "description": "ID của kệ"
+                    },
+                    "_id": {
+                      "type": "string",
+                      "description": "MongoDB Object ID của kệ"
+                    }
+                  }
+                },
+                "products": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "product_id": {
+                        "type": "string",
+                        "description": "ID của sản phẩm"
+                      },
+                      "product_name": {
+                        "type": "string",
+                        "description": "Tên sản phẩm"
+                      },
+                      "price": {
+                        "type": "number",
+                        "description": "Giá sản phẩm"
+                      },
+                      "weight": {
+                        "type": "number",
+                        "description": "Khối lượng sản phẩm"
+                      },
+                      "img_url": {
+                        "type": "string",
+                        "description": "URL hình ảnh sản phẩm"
+                      },
+                      "quantity": {
+                        "type": "number",
+                        "description": "Số lượng sản phẩm trên load cell"
+                      },
+                      "floor": {
+                        "type": "number",
+                        "description": "Tầng của load cell"
+                      },
+                      "column": {
+                        "type": "number",
+                        "description": "Cột của load cell"
+                      }
+                    }
+                  }
+                },
+                "message": {
+                  "type": "string",
+                  "description": "Thông báo kết quả"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy kệ",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi server",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/loadcell/": {
       "get": {
         "description": "",

@@ -168,7 +168,7 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
         },
         opacity: isLoadCellError ? 0.7 : 1,
       }}
-    >
+    >   
       {!localProduct ? (
         <Typography variant="body2" color="text.secondary">
           Drop here
@@ -204,7 +204,6 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
                 background: "rgba(255, 215, 0, 0.5)", // vàng nhạt
                 zIndex: 10,
                 display: "flex",
-
                 alignItems: "center",
                 justifyContent: "center",
                 flexDirection: "column",
@@ -215,28 +214,7 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
               </Typography>
             </div>
           )}
-          {/* Hiển thị threshold ở góc trái */}
-          {localThreshold !== undefined && (
-            <div
-              style={{
-                position: "absolute",
-                top: 4,
-                left: 4,
-                background: "rgba(255,255,255,0.7)",
-                borderRadius: 4,
-                padding: "2px 6px",
-                zIndex: 3,
-              }}
-            >
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                fontWeight="bold"
-              >
-                Threshold: {localThreshold}
-              </Typography>
-            </div>
-          )}
+          
           <div
             style={{
               width: "100%",
@@ -269,7 +247,14 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
               color="inherit"
               sx={{ display: "block" }}
             >
-              Số lượng: {localQuantity !== undefined ? localQuantity : "N/A"}
+              Số lượng: {localQuantity !== undefined ? localQuantity : "N/A"} -
+              <Typography
+                variant="caption"
+                color="text.white"
+                fontWeight="bold"
+              >
+                Ngưỡng: {localThreshold}
+              </Typography>
             </Typography>
           </div>
         </div>

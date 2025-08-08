@@ -153,9 +153,14 @@ exports.getProductsByShelfId = async (req, res) => {
       });
     }
 
-    // Lấy danh sách sản phẩm từ load cells
+    // Lấy danh sách sản phẩm từ load cells với populate
     const loadCells = await LoadCell.find({ shelf_id: shelfId })
-      .select("product_id product_name quantity")
+      .select("product_id quantity floor column")
+      .populate({
+        path: "product_id",
+        select: "product_name price weight img_url",
+        model: "Product" // Tên model của Product
+      })
       .lean();
 
     // Lọc các load cell có sản phẩm (product_id không null hoặc rỗng)
