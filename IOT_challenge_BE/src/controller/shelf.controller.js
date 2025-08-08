@@ -153,7 +153,7 @@ exports.getProductsByShelfId = async (req, res) => {
       });
     }
 
-    // Lấy danh sách sản phẩm từ load cells với populate
+    // Lấy danh sách sản phẩm từ load cells với populate và sắp xếp
     const loadCells = await LoadCell.find({ shelf_id: shelfId })
       .select("product_id quantity floor column")
       .populate({
@@ -161,15 +161,18 @@ exports.getProductsByShelfId = async (req, res) => {
         select: "product_name price weight img_url",
         model: "Product" // Tên model của Product
       })
+      .sort({ floor: 1, column: 1 }) // Sắp xếp theo floor tăng dần, sau đó column tăng dần
       .lean();
 
     // Lọc các load cell có sản phẩm (product_id không null hoặc rỗng)
     const products = loadCells
       .filter((cell) => cell.product_id)
       .map((cell) => ({
-        product_id: cell.product_id,
-        product_name: cell.product_name,
-        quantity: cell.quantity,
+        product_id: cell.product_id._id,
+        product_name: cell.product_id.product_name,
+        price: cell.product_id.price,
+        weight: cell.product_id.weight,
+        img_url: cell.product_id.img_url,
       }));
 
     res.status(200).json({

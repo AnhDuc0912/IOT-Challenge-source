@@ -16,7 +16,9 @@ interface ShelfCompartmentProps {
   handleDragOver: (e: React.DragEvent) => void;
   handleDrop: (e: React.DragEvent, level: number, compartment: number) => void;
   handleRemoveFromShelf: (level: number, compartment: number) => void;
-  onViewProductInfo: (product: Product) => void; // Thêm prop mới
+  onViewProductInfo: (product: Product) => void;
+  onUpdateQuantity?: (cellId: string, newQuantity: number) => void; // Thêm prop mới
+  onUpdateThreshold?: (cellId: string, newThreshold: number) => void; // Thêm prop mới
 }
 
 const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
@@ -28,6 +30,8 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
   handleDrop,
   handleRemoveFromShelf,
   onViewProductInfo, // Thêm prop mới
+  onUpdateQuantity,
+  onUpdateThreshold,
 }) => {
   const isEmpty = !shelfItem?.product;
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -93,6 +97,11 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
           Number(newThreshold)
         );
 
+        // Gọi callback để cập nhật state ở parent
+        if (onUpdateThreshold) {
+          onUpdateThreshold(shelfItem._id, Number(newThreshold));
+        }
+
         setLocalThreshold((updated as any).threshold);
       } catch (err) {
         alert("Cập nhật ngưỡng thất bại!");
@@ -107,6 +116,12 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
           shelfItem._id,
           Number(newQuantity)
         );
+
+        // Gọi callback để cập nhật state ở parent
+        if (onUpdateQuantity) {
+          onUpdateQuantity(shelfItem._id, Number(newQuantity));
+        }
+
         setLocalQuantity(Number(newQuantity));
       } catch (err) {
         alert("Cập nhật số lượng thất bại!");

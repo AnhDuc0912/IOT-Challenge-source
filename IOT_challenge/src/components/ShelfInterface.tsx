@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
+  CircularProgress,
   Container,
   Dialog,
   DialogActions,
@@ -78,6 +79,9 @@ export default function ShelfInterface() {
   const [shelfItems, setShelfItems] = useState<
     (LoadCell & { product: Product | null })[]
   >([]);
+  const [loading, setLoading] = useState(false);
+  const [loadCellsLoading, setLoadCellsLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
@@ -95,6 +99,7 @@ export default function ShelfInterface() {
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true); // Bật loading
       try {
         const [products, shelvesData, employeesList] = await Promise.all([
           fetchProducts(),
@@ -102,7 +107,6 @@ export default function ShelfInterface() {
           getEmployees(),
         ]);
         setSampleProducts(products);
-
         setShelves(shelvesData);
         const formattedEmployees = employeesList.map((emp) => ({
           id: emp.id,
@@ -116,6 +120,8 @@ export default function ShelfInterface() {
       } catch (error) {
         console.error("Failed to fetch data:", error);
         alert("Không thể tải dữ liệu sản phẩm hoặc kệ. Vui lòng thử lại.");
+      } finally {
+        setLoading(false); // Tắt loading
       }
     };
 
@@ -125,14 +131,16 @@ export default function ShelfInterface() {
   useEffect(() => {
     const fetchLoadCells = async () => {
       if (activeShelfId) {
+        setLoadCellsLoading(true); // Bật loading cho loadCells
         try {
           const data = await fetchLoadCellsByShelfId(activeShelfId);
           console.log(data.loadCells);
-
           setLoadCells(data.loadCells);
           console.log("data.loadCells", loadCells);
         } catch (error) {
           console.error("Failed to fetch load cells:", error);
+        } finally {
+          setLoadCellsLoading(false); // Tắt loading
         }
       }
     };
@@ -191,14 +199,14 @@ export default function ShelfInterface() {
       const product = viewChangesMode
         ? sampleProducts.find((p) => p._id === cell.product_id) || null // Chỉ lấy product_id
         : cell.previous_product_id
-          ? sampleProducts.find((p) => p._id === cell.previous_product_id) || null // Lấy previous_product_id nếu có
-          : sampleProducts.find((p) => p._id === cell.product_id) || null; // Ngược lại lấy product_id
+        ? sampleProducts.find((p) => p._id === cell.previous_product_id) || null // Lấy previous_product_id nếu có
+        : sampleProducts.find((p) => p._id === cell.product_id) || null; // Ngược lại lấy product_id
 
       return { ...cell, product };
     });
 
     setShelfItems(items);
-  }, [sampleProducts, viewChangesMode]);
+  }, [loadCells, sampleProducts, viewChangesMode]);
 
   const activeShelf: Shelf | undefined = shelves.find(
     (shelf) => shelf._id === activeShelfId
@@ -243,21 +251,17 @@ export default function ShelfInterface() {
   };
 
   const uploadAllLoadCells = async () => {
+    setUploading(true); // Bật loading
     try {
-      try {
-        await Promise.all(
-          loadCells.map((cell) =>
-            updateLoadCell(cell._id, {
-              product_id: cell.product_id ? cell.product_id : null,
-              quantity: cell.quantity,
-            })
-          )
-        );
-        alert("Upload thành công toàn bộ load cell!");
-      } catch (error) {
-        alert("Có lỗi khi upload load cell!");
-        console.error(error);
-      }
+      await Promise.all(
+        loadCells.map((cell) =>
+          updateLoadCell(cell._id, {
+            product_id: cell.product_id ? cell.product_id : null,
+            quantity: cell.quantity,
+          })
+        )
+      );
+
       const updatedHistory = loadCells.map((cell) => {
         const matchedProduct = sampleProducts.find(
           (p) => p._id === cell.product_id
@@ -270,21 +274,19 @@ export default function ShelfInterface() {
         };
       });
 
-      const filteredProducts = sampleProducts.filter((product) =>
-        updatedHistory.some((history) => history.productID === product._id)
-      );
-
       localStorage.setItem(
         "loadcellHistory",
         JSON.stringify([...updatedHistory])
       );
 
       alert("Upload thành công toàn bộ load cell!");
-
       setSidebarOpen(false);
+      setViewChangesMode(false);
     } catch (error) {
       alert("Có lỗi khi upload load cell!");
       console.error(error);
+    } finally {
+      setUploading(false); // Tắt loading
     }
   };
 
@@ -296,7 +298,6 @@ export default function ShelfInterface() {
     e.preventDefault();
     const productData = e.dataTransfer.getData("application/json");
 
-    console.log(activeShelf);
     if (productData && activeShelf && sampleProducts.length > 0) {
       const product: Product = JSON.parse(productData);
       const targetCell = loadCells.find(
@@ -304,11 +305,32 @@ export default function ShelfInterface() {
       );
 
       if (targetCell) {
+        // Cập nhật state loadCells
         setLoadCells((prev) =>
           prev.map((cell) =>
             cell._id === targetCell._id
-              ? { ...cell, product_id: product._id, quantity: 1 }
+              ? { 
+                  ...cell, 
+                  product_id: product._id, 
+                  quantity: 1,
+                  previous_product_id: cell.product_id // Lưu product_id hiện tại vào previous
+                }
               : cell
+          )
+        );
+
+        // Cập nhật state shelfItems để UI phản ánh ngay lập tức
+        setShelfItems((prev) =>
+          prev.map((item) =>
+            item._id === targetCell._id
+              ? { 
+                  ...item, 
+                  product_id: product._id, 
+                  quantity: 1,
+                  previous_product_id: item.product_id,
+                  product: product 
+                }
+              : item
           )
         );
       }
@@ -323,37 +345,35 @@ export default function ShelfInterface() {
     );
 
     if (targetCell) {
+      // Cập nhật state loadCells
       setLoadCells((prev) =>
         prev.map((cell) =>
           cell._id === targetCell._id
-            ? { ...cell, product_id: null, quantity: 0 }
+            ? { 
+                ...cell, 
+                product_id: null, 
+                quantity: 0,
+                previous_product_id: cell.product_id // Lưu product_id hiện tại vào previous
+              }
             : cell
         )
       );
+
+      // Cập nhật state shelfItems để UI phản ánh ngay lập tức
+      setShelfItems((prev) =>
+        prev.map((item) =>
+          item._id === targetCell._id
+            ? { 
+                ...item, 
+                product_id: null, 
+                quantity: 0,
+                previous_product_id: item.product_id,
+                product: null 
+              }
+            : item
+        )
+      );
     }
-  };
-
-  const getShelfItem = (
-    level: number,
-    compartment: number
-  ): (LoadCell & { product: Product | null }) | null => {
-    // Tìm loadCell theo vị trí tầng và cột
-    const loadCell = loadCells.find(
-      (cell) => cell.floor === level + 1 && cell.column === compartment + 1
-    );
-    if (!loadCell) return null;
-
-    // Lấy sản phẩm theo previous_product_id nếu có, nếu không thì lấy theo product_id
-    console.log(loadCell);
-
-    const product = loadCell.previous_product_id !== null
-      ? sampleProducts.find((p) => p._id === loadCell.previous_product_id)
-      : sampleProducts.find((p) => p._id === loadCell.product_id);
-
-    return {
-      ...loadCell,
-      product: product || null, // Nếu không tìm thấy sản phẩm, trả về null
-    };
   };
 
   const handleMenuClose = () => {
@@ -378,6 +398,46 @@ export default function ShelfInterface() {
 
   const handleViewChanges = () => {
     setViewChangesMode(!viewChangesMode); // Bật chế độ "Xem sự thay đổi"
+  };
+
+  const handleUpdateQuantity = (cellId: string, newQuantity: number) => {
+    // Cập nhật state loadCells
+    setLoadCells((prev) =>
+      prev.map((cell) =>
+        cell._id === cellId
+          ? { ...cell, quantity: newQuantity }
+          : cell
+      )
+    );
+
+    // Cập nhật state shelfItems
+    setShelfItems((prev) =>
+      prev.map((item) =>
+        item._id === cellId
+          ? { ...item, quantity: newQuantity }
+          : item
+      )
+    );
+  };
+
+  const handleUpdateThreshold = (cellId: string, newThreshold: number) => {
+    // Cập nhật state loadCells
+    setLoadCells((prev) =>
+      prev.map((cell) =>
+        cell._id === cellId
+          ? { ...cell, threshold: newThreshold }
+          : cell
+      )
+    );
+
+    // Cập nhật state shelfItems
+    setShelfItems((prev) =>
+      prev.map((item) =>
+        item._id === cellId
+          ? { ...item, threshold: newThreshold }
+          : item
+      )
+    );
   };
 
   return (
@@ -489,6 +549,26 @@ export default function ShelfInterface() {
         }}
       >
         <Container maxWidth="lg">
+          {/* Loading overlay cho toàn bộ component */}
+          {loading && (
+            <Box
+              sx={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: "rgba(255, 255, 255, 0.8)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 9999,
+              }}
+            >
+              <CircularProgress size={60} />
+            </Box>
+          )}
+
           {/* <MqttMessageViewer /> */}
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             Các mã lỗi:
@@ -521,7 +601,7 @@ export default function ShelfInterface() {
           >
             <Typography variant="h4">
               {activeShelf?.shelf_name || "Shelf"}
-              {hasProductChange && (
+              {hasProductChange && !sidebarOpen && (
                 <Box>
                   <Typography variant="h6" color="error" sx={{ mb: 2 }}>
                     Có sự thay đổi hàng hóa
@@ -532,7 +612,7 @@ export default function ShelfInterface() {
                     color={viewChangesMode ? "secondary" : "info"}
                     onClick={handleViewChanges}
                   >
-                    {viewChangesMode ? "Hủy thay đổi" : "Xem sự thay đổi hàng hóa"}
+                    {viewChangesMode ? "Quay lại" : "Xem sự thay đổi hàng hóa"}
                   </Button>
 
                 </Box>
@@ -550,8 +630,9 @@ export default function ShelfInterface() {
                   variant="contained"
                   color="primary"
                   onClick={uploadAllLoadCells}
+                  disabled={uploading}
                 >
-                  Lưu
+                  {uploading ? <CircularProgress size={20} color="inherit" /> : "Lưu"}
                 </Button>
               ) : (
                 <>
@@ -568,8 +649,9 @@ export default function ShelfInterface() {
                     variant="contained"
                     color="secondary"
                     onClick={uploadAllLoadCells}
+                    disabled={uploading}
                   >
-                    Cập nhật
+                    {uploading ? <CircularProgress size={20} color="inherit" /> : "Cập nhật"}
                   </Button>
                 </>
               )}
@@ -577,46 +659,68 @@ export default function ShelfInterface() {
               <Button
                 variant="contained"
                 color="success"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
+                onClick={() => {
+                  setSidebarOpen(!sidebarOpen)
+                  sidebarOpen ? setViewChangesMode(false) : setViewChangesMode(true)
+                }}
               >
                 {sidebarOpen ? "Hủy thay đổi" : "Thay đổi hàng hóa"}
               </Button>
             </Box>
           </Box>
 
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            {[0, 1, 2].map((level) => (
-              <Box key={level}>
-                <Grid container spacing={2}>
-                  {[0, 1, 2, 3, 4].map((compartment, index) => {
-                    const cellIndex = level * 5 + compartment;
-                    const cell = shelfItems.find(
-                      (item) => item.floor === level + 1 && item.column === compartment + 1
-                    );
-                    const quantity =
-                      realtimeQuantities[cellIndex] !== undefined
-                        ? realtimeQuantities[cellIndex]
-                        : cell?.quantity ?? 0;
+          {/* Loading cho shelf items */}
+          {loadCellsLoading ? (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                minHeight: 400,
+              }}
+            >
+              <CircularProgress />
+              <Typography variant="h6" sx={{ ml: 2 }}>
+                Đang tải dữ liệu kệ...
+              </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              {[0, 1, 2].map((level) => (
+                <Box key={level}>
+                  <Grid container spacing={2}>
+                    {[0, 1, 2, 3, 4].map((compartment, index) => {
+                      const cellIndex = level * 5 + compartment;
+                      const cell = shelfItems.find(
+                        (item) => item.floor === level + 1 && item.column === compartment + 1
+                      );
+                      const quantity =
+                        realtimeQuantities[cellIndex] !== undefined
+                          ? realtimeQuantities[cellIndex]
+                          : cell?.quantity ?? 0;
 
-                    return (
-                      <Grid component="div" size={2.4} key={index}>
-                        <ShelfCompartment
-                          level={level}
-                          quantity={quantity}
-                          compartment={compartment}
-                          shelfItem={cell || null}
-                          handleDragOver={handleDragOver}
-                          handleDrop={handleDrop}
-                          handleRemoveFromShelf={handleRemoveFromShelf}
-                          onViewProductInfo={handleViewProductInfo}
-                        />
-                      </Grid>
-                    );
-                  })}
-                </Grid>
-              </Box>
-            ))}
-          </Box>
+                      return (
+                        <Grid component="div" size={2.4} key={index}>
+                          <ShelfCompartment
+                            level={level}
+                            quantity={quantity}
+                            compartment={compartment}
+                            shelfItem={cell || null}
+                            handleDragOver={handleDragOver}
+                            handleDrop={handleDrop}
+                            handleRemoveFromShelf={handleRemoveFromShelf}
+                            onViewProductInfo={handleViewProductInfo}
+                            onUpdateQuantity={handleUpdateQuantity} // Thêm prop mới
+                            onUpdateThreshold={handleUpdateThreshold} // Thêm prop mới
+                          />
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+                </Box>
+              ))}
+            </Box>
+          )}
 
           <>
             <ShelfStatistics shelf={activeShelf} loadCells={loadCells} />
