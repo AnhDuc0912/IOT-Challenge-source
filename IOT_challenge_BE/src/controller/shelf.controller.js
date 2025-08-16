@@ -165,15 +165,31 @@ exports.getProductsByShelfId = async (req, res) => {
       .lean();
 
     // Lọc các load cell có sản phẩm (product_id không null hoặc rỗng)
-    const products = loadCells
-      .filter((cell) => cell.product_id)
-      .map((cell) => ({
-        product_id: cell.product_id._id,
+    // Mapping lại để luôn trả về 1 object cho mỗi loadCell
+    const products = loadCells.map((cell) => {
+      if (!cell.product_id || cell.product_id === "" || cell.product_id === null) {
+        return {
+          product_id: null,
+          product_name: null,
+          price: null,
+          weight: null,
+          img_url: null,
+          quantity: cell.quantity,
+          floor: cell.floor,
+          column: cell.column,
+        };
+      }
+      return {
+        product_id: cell.product_id._id || cell.product_id,
         product_name: cell.product_id.product_name,
         price: cell.product_id.price,
         weight: cell.product_id.weight,
         img_url: cell.product_id.img_url,
-      }));
+        quantity: cell.quantity,
+        floor: cell.floor,
+        column: cell.column,
+      };
+    });
 
     res.status(200).json({
       shelf: {
