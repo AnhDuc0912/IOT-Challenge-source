@@ -1,12 +1,15 @@
 export interface Product {
-  _id: string;
+  _id?: string;
   product_id: string;
   product_name: string;
   img_url: string;
   price: number;
   stock: number;
-  createdAt: Date;
-  updatedAt: Date;
+  weight: number;
+  discount: number;
+  max_quantity: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface Shelf {

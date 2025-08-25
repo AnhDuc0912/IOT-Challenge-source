@@ -158,7 +158,7 @@ exports.getProductsByShelfId = async (req, res) => {
       .select("product_id quantity floor column")
       .populate({
         path: "product_id",
-        select: "product_name price price_sale max_quantity weight img_url",
+        select: "product_name price discount max_quantity weight img_url",
         model: "Product", // Tên model của Product
       })
       .sort({ floor: 1, column: 1 }) // Sắp xếp theo floor tăng dần, sau đó column tăng dần
@@ -171,7 +171,7 @@ exports.getProductsByShelfId = async (req, res) => {
           product_id: null,
           product_name: null,
           price: null,
-          price_sale: null,
+          discount: null,
           max_quantity: null,
           weight: null,
           img_url: null,
@@ -184,7 +184,7 @@ exports.getProductsByShelfId = async (req, res) => {
         product_id: cell.product_id._id || cell.product_id,
         product_name: cell.product_id.product_name,
         price: cell.product_id.price,
-        price_sale: cell.product_id.price_sale,
+        discount: cell.product_id.discount,
         max_quantity: cell.product_id.max_quantity,
         weight: cell.product_id.weight,
         img_url: cell.product_id.img_url,

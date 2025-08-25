@@ -141,7 +141,7 @@ export default function ProductManagement() {
       );
       setSnackbar({
         open: true,
-        message: `${currentProduct.product_name} has been deleted`,
+        message: `${currentProduct.product_name} đã được xóa`,
         severity: "success",
       });
       setDeleteDialogOpen(false);
@@ -155,7 +155,7 @@ export default function ProductManagement() {
     if (!formData.product_name || formData.price <= 0) {
       setSnackbar({
         open: true,
-        message: "Please fill in all required fields",
+        message: "Vui lòng điền đầy đủ thông tin bắt buộc",
         severity: "error",
       });
       return;
@@ -181,13 +181,13 @@ export default function ProductManagement() {
         );
         setSnackbar({
           open: true,
-          message: `${updatedProduct.product_name} has been updated`,
+          message: `${updatedProduct.product_name} đã được cập nhật`,
           severity: "success",
         });
       } catch (error) {
         setSnackbar({
           open: true,
-          message: "Failed to update product.",
+          message: "Cập nhật sản phẩm thất bại.",
           severity: "error",
         });
       }
@@ -198,7 +198,10 @@ export default function ProductManagement() {
           product_name: formData.product_name,
           img_url: "", // backend sẽ tự set
           price: formData.price,
-          stock: formData.stock,
+          stock: (formData as any).stock ?? 0,
+          weight: formData.weight ?? null,
+          max_quantity: formData.max_quantity ?? null,
+          discount: formData.discount ?? null,
         };
 
         const addedProduct = await addProduct(productToAdd, file);
@@ -207,13 +210,13 @@ export default function ProductManagement() {
         setFilteredProducts((prev) => [...prev, addedProduct]);
         setSnackbar({
           open: true,
-          message: `${addedProduct.product_name} has been added`,
+          message: `${addedProduct.product_name} đã được thêm`,
           severity: "success",
         });
       } catch (error) {
         setSnackbar({
           open: true,
-          message: "Failed to add product.",
+          message: "Thêm sản phẩm thất bại.",
           severity: "error",
         });
       }
@@ -263,7 +266,7 @@ export default function ProductManagement() {
             }}
           >
             <Typography variant="h5" sx={{ ml: 2 }}>
-              Product Management
+              Quản lý sản phẩm
             </Typography>
             <Button
               variant="contained"
@@ -272,7 +275,7 @@ export default function ProductManagement() {
               onClick={handleAddProduct}
               sx={{ fontWeight: "bold" }}
             >
-              Add Product
+              Thêm sản phẩm
             </Button>
           </Box>
         </Container>
@@ -286,7 +289,7 @@ export default function ProductManagement() {
             <Grid size={6}>
               <TextField
                 fullWidth
-                placeholder="Search products..."
+                placeholder="Tìm sản phẩm..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
@@ -310,7 +313,7 @@ export default function ProductManagement() {
             </Grid>
             <Grid size={4}>
               <FormControl fullWidth>
-                <InputLabel>Sort By</InputLabel>
+                <InputLabel>Sắp xếp</InputLabel>
                 <Select
                   value={`${sortBy}-${sortDirection}`}
                   onChange={(e) => {
@@ -323,14 +326,14 @@ export default function ProductManagement() {
                     setSortBy(newSortBy);
                     setSortDirection(newSortDirection);
                   }}
-                  label="Sort By"
+                  label="Sắp xếp"
                 >
-                  <MenuItem value="product_name-asc">Name (A-Z)</MenuItem>
-                  <MenuItem value="product_name-desc">Name (Z-A)</MenuItem>
-                  <MenuItem value="price-asc">Price (Low to High)</MenuItem>
-                  <MenuItem value="price-desc">Price (High to Low)</MenuItem>
-                  <MenuItem value="createdAt-desc">Newest First</MenuItem>
-                  <MenuItem value="createdAt-asc">Oldest First</MenuItem>
+                  <MenuItem value="product_name-asc">Tên (A-Z)</MenuItem>
+                  <MenuItem value="product_name-desc">Tên (Z-A)</MenuItem>
+                  <MenuItem value="price-asc">Giá (Tăng dần)</MenuItem>
+                  <MenuItem value="price-desc">Giá (Giảm dần)</MenuItem>
+                  <MenuItem value="createdAt-desc">Mới nhất</MenuItem>
+                  <MenuItem value="createdAt-asc">Cũ nhất</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -342,13 +345,13 @@ export default function ProductManagement() {
                 onClick={clearFilters}
                 disabled={!searchTerm}
               >
-                Clear
+                Xóa
               </Button>
             </Grid>
             <Grid size={1}>
               <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
                 <Tooltip
-                  title={viewMode === "grid" ? "List View" : "Grid View"}
+                  title={viewMode === "grid" ? "Chuyển sang danh sách" : "Chuyển sang lưới"}
                 >
                   <IconButton
                     onClick={() =>
@@ -371,10 +374,10 @@ export default function ProductManagement() {
         {filteredProducts.length === 0 ? (
           <Paper sx={{ p: 4, textAlign: "center" }}>
             <Typography variant="h6" color="text.secondary">
-              No products found
+              Không tìm thấy sản phẩm
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Try adjusting your search or filters
+              Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
             </Typography>
           </Paper>
         ) : viewMode === "grid" ? (
@@ -396,7 +399,7 @@ export default function ProductManagement() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Image</TableCell>
+                  <TableCell>Hình</TableCell>
                   <TableCell>
                     <Box
                       sx={{
@@ -406,7 +409,7 @@ export default function ProductManagement() {
                       }}
                       onClick={() => handleSortChange("product_name")}
                     >
-                      Name
+                      Tên
                       {sortBy === "product_name" && (
                         <SortIcon
                           fontSize="small"
@@ -430,7 +433,7 @@ export default function ProductManagement() {
                       }}
                       onClick={() => handleSortChange("price")}
                     >
-                      Price
+                      Giá
                       {sortBy === "price" && (
                         <SortIcon
                           fontSize="small"
@@ -445,8 +448,11 @@ export default function ProductManagement() {
                       )}
                     </Box>
                   </TableCell>
-                  <TableCell>Stock</TableCell>
-                  <TableCell>Actions</TableCell>
+                  <TableCell>Kho</TableCell>
+                  <TableCell>Cân nặng</TableCell>
+                  <TableCell>Số lượng tối đa</TableCell>
+                  <TableCell>Khuyến mãi (%)</TableCell>
+                  <TableCell>Hành động</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -467,8 +473,15 @@ export default function ProductManagement() {
                           {product.product_name}
                         </Typography>
                       </TableCell>
-                      <TableCell>${product.price.toFixed(2)}</TableCell>
-                      <TableCell>{product.stock}</TableCell>
+                      <TableCell>
+                        {typeof product.price === "number"
+                          ? `$${product.price.toFixed(2)}`
+                          : product.price}
+                      </TableCell>
+                      <TableCell>{(product as any).stock ?? "-"}</TableCell>
+                      <TableCell>{(product as any).weight ?? "-"}</TableCell>
+                      <TableCell>{(product as any).max_quantity ?? "-"}</TableCell>
+                      <TableCell>{(product as any).discount ?? (product as any).discount ?? "-"}</TableCell>
                       <TableCell>
                         <Box sx={{ display: "flex", gap: 1 }}>
                           <IconButton

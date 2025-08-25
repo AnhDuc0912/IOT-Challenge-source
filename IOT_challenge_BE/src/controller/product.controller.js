@@ -64,6 +64,9 @@ exports.updateProduct = async (req, res) => {
       updateData.img_url = `${process.env.APP_ADDRESS}/uploads/${req.file.filename}`;
     }
 
+    console.log(updateData);
+    
+
     const product = await Product.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
     });

@@ -1,55 +1,56 @@
 import axios from "axios";
+import { CreateUserDTO, UpdateUserDTO, User } from "../types/userTypes";
 
 const apiUrl = import.meta.env.VITE_API_ENDPOINT;
 
-export interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-  role: "Admin" | "Manager" | "Employee" | "Viewer";
-  status: "Active" | "Inactive" | "Suspended";
-  avatar?: string;
-  department?: string;
-  joinDate: Date;
-  lastLogin?: Date;
-  permissions: string[];
+
+
+export async function getUsers(): Promise<User[]> {
+  const res = await axios.get("http://localhost:3000/api/users");
+  return res.data; // data là mảng user từ BE
 }
-
-export const getUsers = async (): Promise<User[]> => {
-  const response = await axios.get(`${apiUrl}/users`);
-  return response.data.map((u: any) => ({
-    id: u._id,
-    firstName: u.fullName?.split(" ")[0] || "",
-    lastName: u.fullName?.split(" ").slice(1).join(" ") || "",
-    email: u.email,
-    phone: u.phone,
-    role:
-      u.role === "admin" ? "Admin" :
-      u.role === "manager" ? "Manager" :
-      u.role === "employee" ? "Employee" :
-      "Viewer",
-
-    status: u.isActive ? "Active" : "Inactive",
-    avatar: u.avatar,
-    department: "", // Nếu có trường department thì lấy, còn không để rỗng
-    joinDate: u.createdAt ? new Date(u.createdAt) : new Date(),
-    lastLogin: u.updatedAt ? new Date(u.updatedAt) : undefined,
-    permissions: [], // Nếu có trường permissions thì lấy, còn không để mảng rỗng
-  }));
-};
 
 export const getEmployees = async (): Promise<User[]> => {
   const users = await getUsers();
-  return users.filter(user => user.role === "Employee").map(employee => ({
+  return users.filter(user => user.role === "employee").map(employee => ({
     ...employee,
     // Format lại dữ liệu cho phù hợp với TaskDialog
-    id: employee.id,
-    name: `${employee.firstName} ${employee.lastName}`,
+    id: employee._id,
+    name: `${employee.fullName}`,
   }));
 };
 
+const api = axios.create({ baseURL: '/api' });
 
+const mapUser = (u: any): User => ({
+  _id: u._id ?? u.id,
+  username: u.username,
+  rfid: u.rfid,
+  email: u.email,
+  fullName: u.fullName ?? '',
+  phone: u.phone ?? '',
+  avatar: u.avatar ?? '',
+  address: u.address ?? '',
+  dateOfBirth: u.dateOfBirth ? new Date(u.dateOfBirth).toISOString() : undefined,
+  gender: u.gender,
+  role: u.role, // 'user' | 'admin'
+  isActive: typeof u.isActive === 'boolean' ? u.isActive : true,
+  lastLogin: u.lastLogin ? new Date(u.lastLogin).toISOString() : undefined,
+  emailVerified: !!u.emailVerified,
+  createdAt: u.createdAt,
+  updatedAt: u.updatedAt,
+});
 
-// Có thể thêm các hàm khác như createUser, updateUser, deleteUser nếu cần
+export async function createUser(payload: CreateUserDTO): Promise<User> {
+  const { data } = await api.post(apiUrl + '/users', payload);
+  return mapUser(data);
+}
+
+export async function updateUser(id: string, payload: Partial<User>): Promise<User> {
+  const res = await axios.put(`${apiUrl}/users/${id}`, payload);
+  return res.data; // BE trả về user đã update
+}
+
+export async function deleteUser(id: string): Promise<void> {
+  await api.delete(`/users/${id}`);
+}

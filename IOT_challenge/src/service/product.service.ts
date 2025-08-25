@@ -36,12 +36,14 @@ export async function getProductById(productId: string): Promise<Product | null>
   }
 }
 
-export async function addProduct(productData: any, file?: File) {
+export async function addProduct(productData: Product, file?: File) {
   const form = new FormData();
   form.append("product_id", productData.product_id);
   form.append("product_name", productData.product_name);
   form.append("price", String(productData.price));
-  form.append("stock", String(productData.stock));
+  form.append("discount", String(productData.discount));
+  form.append("weight", String(productData.weight));
+  form.append("max_quantity", String(productData.max_quantity));
   if (file) {
     form.append("product_image", file); // 👈 tên phải trùng với upload.single("product_image")
   }
@@ -59,7 +61,7 @@ export async function addProduct(productData: any, file?: File) {
 }
 
 export async function updateProduct(
-  productId: string,
+  productId: string | undefined,
   productData: any,
   file?: File
 ) {
@@ -67,6 +69,9 @@ export async function updateProduct(
   form.append("product_name", productData.product_name);
   form.append("price", String(productData.price));
   form.append("stock", String(productData.stock));
+  form.append("discount", String(productData.discount));
+  form.append("weight", String(productData.weight));
+  form.append("max_quantity", String(productData.max_quantity));
   if (file) {
     form.append("product_image", file); // hoặc img_url nếu backend yêu cầu tên này
   }
