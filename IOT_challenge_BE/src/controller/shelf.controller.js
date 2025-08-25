@@ -158,13 +158,12 @@ exports.getProductsByShelfId = async (req, res) => {
       .select("product_id quantity floor column")
       .populate({
         path: "product_id",
-        select: "product_name price weight img_url",
-        model: "Product" // Tên model của Product
+        select: "product_name price price_sale max_quantity weight img_url",
+        model: "Product", // Tên model của Product
       })
       .sort({ floor: 1, column: 1 }) // Sắp xếp theo floor tăng dần, sau đó column tăng dần
       .lean();
 
-    // Lọc các load cell có sản phẩm (product_id không null hoặc rỗng)
     // Mapping lại để luôn trả về 1 object cho mỗi loadCell
     const products = loadCells.map((cell) => {
       if (!cell.product_id || cell.product_id === "" || cell.product_id === null) {
@@ -172,6 +171,8 @@ exports.getProductsByShelfId = async (req, res) => {
           product_id: null,
           product_name: null,
           price: null,
+          price_sale: null,
+          max_quantity: null,
           weight: null,
           img_url: null,
           quantity: cell.quantity,
@@ -183,6 +184,8 @@ exports.getProductsByShelfId = async (req, res) => {
         product_id: cell.product_id._id || cell.product_id,
         product_name: cell.product_id.product_name,
         price: cell.product_id.price,
+        price_sale: cell.product_id.price_sale,
+        max_quantity: cell.product_id.max_quantity,
         weight: cell.product_id.weight,
         img_url: cell.product_id.img_url,
         quantity: cell.quantity,
@@ -202,6 +205,49 @@ exports.getProductsByShelfId = async (req, res) => {
   } catch (err) {
     res.status(500).json({
       error: "Failed to fetch products",
+      message: err.message,
+    });
+  }
+};
+
+exports.getEmployee = async (req, res) => {
+  try {
+    const shelfId = req.params.shelfId;
+
+    // Tìm kệ theo shelfId và populate user_id để lấy thông tin User
+    const shelf = await Shelf.findById(shelfId).populate({
+      path: "user_id",
+      select: "username role rfid", // Chỉ lấy các trường cần thiết từ User
+    });
+
+    if (!shelf) {
+      return res.status(404).json({
+        error: "Shelf not found",
+        message: `Shelf with ID ${shelfId} does not exist.`,
+      });
+    }
+
+    // Kiểm tra xem user_id có tồn tại không
+    if (!shelf.user_id) {
+      return res.status(404).json({
+        error: "User not found",
+        message: `No user assigned to shelf with ID ${shelfId}.`,
+      });
+    }
+
+    // Trả về thông tin User
+    res.status(200).json({
+      shelf_id: shelf.shelf_id,
+      user: {
+        username: shelf.user_id.username,
+        role: shelf.user_id.role,
+        rfid: shelf.user_id.rfid,
+      },
+      message: "User retrieved successfully.",
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to fetch user",
       message: err.message,
     });
   }

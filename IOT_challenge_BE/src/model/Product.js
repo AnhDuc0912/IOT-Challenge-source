@@ -18,6 +18,10 @@ const ProductSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  price_sale: {
+    type: Number,
+    required: true
+  },
   stock: {
     type: Number,
     required: true,
@@ -27,6 +31,11 @@ const ProductSchema = new mongoose.Schema({
     type: Number,
     required: true,
     default: 0
+  },
+  max_quantity: {
+    type: Number,
+    required: true,
+    default: 1
   },
 }, {
   timestamps: true

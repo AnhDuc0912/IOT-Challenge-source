@@ -11,5 +11,6 @@ router.delete("/:id", shelfController.deleteShelf);
 router.get("/get-loadcell/:shelfId", shelfController.getLoadsellByShelfId);
 // Lấy danh sách sản phẩm trên load cell theo Shelf ID
 router.get("/get-products/:shelfId", shelfController.getProductsByShelfId);
+router.get("/get-employee/:shelfId", shelfController.getEmployee);
 
 module.exports = router
