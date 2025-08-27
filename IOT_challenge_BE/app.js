@@ -31,6 +31,23 @@ app.use(express.static('public'));
 console.log(process.env.MONGO_URI);
 connectDB()
 
+// lưu raw body để debug (tùy chọn)
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf.toString();
+  }
+}));
+
+// middleware bắt lỗi parse JSON
+app.use((err, req, res, next) => {
+  if (err && err.type === 'entity.parse.failed') {
+    console.error('Invalid JSON payload:', err.message);
+    console.error('Raw body:', req.rawBody);
+    return res.status(400).json({ success: false, error: 'Invalid JSON payload' });
+  }
+  next(err);
+});
+
 // Schema sản phẩm
 const routes = require('./src/routes');
 app.use('/api', routes);

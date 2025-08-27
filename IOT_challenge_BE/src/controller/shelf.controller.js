@@ -1,14 +1,38 @@
 const Shelf = require("../model/Shelf");
 const LoadCell = require("../model/LoadCell");
+const {
+  model
+} = require("mongoose");
 
 // Lấy danh sách tất cả kệ
 exports.getAllShelves = async (req, res) => {
   try {
-    const shelves = await Shelf.find().populate("user_id", "username role");
+    const shelves = await Shelf.find().populate({
+      path: "user_id",
+      model: "User"
+    });
     res.json(shelves);
   } catch (err) {
     res.status(500).json({
       error: "Failed to fetch shelves",
+    });
+  }
+};
+
+exports.getShelfById = async (req, res) => {
+  try {
+    const shelf = await Shelf.findById(req.params.id);
+    if (!shelf) {
+      return res.status(404).json({
+        error: "Shelf not found",
+        message: `Shelf with ID ${req.params.id} does not exist.`,
+      });
+    }
+    res.status(200).json(shelf);
+  } catch (err) {
+    res.status(500).json({
+      error: "Failed to fetch shelf",
+      message: err.message,
     });
   }
 };
@@ -154,14 +178,19 @@ exports.getProductsByShelfId = async (req, res) => {
     }
 
     // Lấy danh sách sản phẩm từ load cells với populate và sắp xếp
-    const loadCells = await LoadCell.find({ shelf_id: shelfId })
+    const loadCells = await LoadCell.find({
+        shelf_id: shelfId
+      })
       .select("product_id quantity floor column")
       .populate({
         path: "product_id",
         select: "product_name price discount max_quantity weight img_url",
         model: "Product", // Tên model của Product
       })
-      .sort({ floor: 1, column: 1 }) // Sắp xếp theo floor tăng dần, sau đó column tăng dần
+      .sort({
+        floor: 1,
+        column: 1
+      }) // Sắp xếp theo floor tăng dần, sau đó column tăng dần
       .lean();
 
     // Mapping lại để luôn trả về 1 object cho mỗi loadCell

@@ -53,8 +53,6 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
   );
 
   React.useEffect(() => {
-    console.log(shelfItem);
-
     setLocalProduct(shelfItem?.product ?? null);
     setLocalThreshold(shelfItem?.threshold);
     setLocalQuantity(shelfItem?.quantity);
@@ -136,7 +134,6 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
 
   const handleSaveProduct = (productData: any, file?: File) => {
     // Xử lý lưu sản phẩm nếu cần
-    console.log("Saving product:", productData, file);
     handleCloseProductDialog();
   };
 
@@ -208,7 +205,7 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
           onClick={isLoadCellError ? undefined : handleOpenMenu}
         >
           {/* Overlay cảnh báo loadcell lỗi */}
-          {isLoadCellError && (
+          {isLoadCellError ? (
             <div
               style={{
                 position: "absolute",
@@ -228,7 +225,7 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
                 {isLoadCellError}
               </Typography>
             </div>
-          )}
+          ): null}
           
           <div
             style={{

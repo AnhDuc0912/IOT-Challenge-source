@@ -46,15 +46,13 @@ import { Product, Shelf, LoadCell } from "../types/selfTypes";
 import AddShelfDialog from "./AddShelfDialog";
 import ProductDialog from "./ProductDialog";
 import TaskDialog from "./TaskDialog";
+import ShelfInfoDialog from "./ShelfInfoDialog";
+import { User } from "../types/userTypes";
 
-interface Employee {
-  id: string;
-  name: string;
-}
 
 export default function ShelfInterface() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [employees, setEmployees] = useState<User[]>([]);
   const [shelves, setShelves] = useState<Shelf[]>([]);
   const [activeShelfId, setActiveShelfId] = useState(
     "685aafc545619025a0bb9f27"
@@ -82,6 +80,7 @@ export default function ShelfInterface() {
   const [loading, setLoading] = useState(false);
   const [loadCellsLoading, setLoadCellsLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [shelfInfoOpen, setShelfInfoOpen] = useState(false);
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
@@ -106,17 +105,11 @@ export default function ShelfInterface() {
           fetchShelves(),
           getEmployees(),
         ]);
+
         setSampleProducts(products);
         setShelves(shelvesData);
-        const formattedEmployees = employeesList.map((emp) => ({
-          id: emp.id,
-          name: `${emp.firstName} ${emp.lastName}`,
-        }));
-        setEmployees(formattedEmployees);
-        console.log("Loaded data:", {
-          products,
-          employees: formattedEmployees,
-        });
+        setEmployees(employeesList);
+
       } catch (error) {
         console.error("Failed to fetch data:", error);
         alert("Không thể tải dữ liệu sản phẩm hoặc kệ. Vui lòng thử lại.");
@@ -199,8 +192,8 @@ export default function ShelfInterface() {
       const product = viewChangesMode
         ? sampleProducts.find((p) => p._id === cell.product_id) || null // Chỉ lấy product_id
         : cell.previous_product_id
-        ? sampleProducts.find((p) => p._id === cell.previous_product_id) || null // Lấy previous_product_id nếu có
-        : sampleProducts.find((p) => p._id === cell.product_id) || null; // Ngược lại lấy product_id
+          ? sampleProducts.find((p) => p._id === cell.previous_product_id) || null // Lấy previous_product_id nếu có
+          : sampleProducts.find((p) => p._id === cell.product_id) || null; // Ngược lại lấy product_id
 
       return { ...cell, product };
     });
@@ -218,8 +211,8 @@ export default function ShelfInterface() {
         _id: Date.now().toString(),
         shelf_id: `S${Date.now()}`,
         shelf_name: newShelfName.trim(),
-        user_id: "default_user",
-        location: "default_location",
+        user: null,
+        location: "",
         createdAt: new Date(),
       };
       setShelves((prev) => [...prev, newShelf]);
@@ -309,12 +302,12 @@ export default function ShelfInterface() {
         setLoadCells((prev) =>
           prev.map((cell) =>
             cell._id === targetCell._id
-              ? { 
-                  ...cell, 
-                  product_id: product._id, 
-                  quantity: 1,
-                  previous_product_id: cell.product_id // Lưu product_id hiện tại vào previous
-                }
+              ? {
+                ...cell,
+                product_id: product._id,
+                quantity: 1,
+                previous_product_id: cell.product_id // Lưu product_id hiện tại vào previous
+              }
               : cell
           )
         );
@@ -323,13 +316,13 @@ export default function ShelfInterface() {
         setShelfItems((prev) =>
           prev.map((item) =>
             item._id === targetCell._id
-              ? { 
-                  ...item, 
-                  product_id: product._id, 
-                  quantity: 1,
-                  previous_product_id: item.product_id,
-                  product: product 
-                }
+              ? {
+                ...item,
+                product_id: product._id,
+                quantity: 1,
+                previous_product_id: item.product_id,
+                product: product
+              }
               : item
           )
         );
@@ -349,12 +342,12 @@ export default function ShelfInterface() {
       setLoadCells((prev) =>
         prev.map((cell) =>
           cell._id === targetCell._id
-            ? { 
-                ...cell, 
-                product_id: null, 
-                quantity: 0,
-                previous_product_id: cell.product_id // Lưu product_id hiện tại vào previous
-              }
+            ? {
+              ...cell,
+              product_id: null,
+              quantity: 0,
+              previous_product_id: cell.product_id // Lưu product_id hiện tại vào previous
+            }
             : cell
         )
       );
@@ -363,13 +356,13 @@ export default function ShelfInterface() {
       setShelfItems((prev) =>
         prev.map((item) =>
           item._id === targetCell._id
-            ? { 
-                ...item, 
-                product_id: null, 
-                quantity: 0,
-                previous_product_id: item.product_id,
-                product: null 
-              }
+            ? {
+              ...item,
+              product_id: null,
+              quantity: 0,
+              previous_product_id: item.product_id,
+              product: null
+            }
             : item
         )
       );
@@ -648,7 +641,7 @@ export default function ShelfInterface() {
                   <Button
                     variant="contained"
                     color="secondary"
-                    onClick={uploadAllLoadCells}
+                    onClick={() => setShelfInfoOpen(true)}
                     disabled={uploading}
                   >
                     {uploading ? <CircularProgress size={20} color="inherit" /> : "Cập nhật"}
@@ -745,6 +738,13 @@ export default function ShelfInterface() {
         onClose={handleCloseProductDialog}
         onSave={handleSaveProduct}
         product={selectedProduct}
+      />
+
+      <ShelfInfoDialog
+        open={shelfInfoOpen}
+        onClose={() => setShelfInfoOpen(false)}
+        shelf={activeShelf}
+        loadCells={loadCells}
       />
 
       <TaskDialog

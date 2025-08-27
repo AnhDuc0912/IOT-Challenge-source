@@ -71,19 +71,15 @@ import { useNavigate } from "react-router-dom";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import type { Receipt, ReceiptItem, User } from "../types/receiptTypes";
-import {
-  sampleProducts,
-  sampleCustomers,
-  sampleUsers,
-  generateSampleReceipts,
-} from "../mock/receiptMockData";
-import { Product } from "../mock/shelfMockData";
+import type { Product, Receipt, ReceiptItem, User } from "../types/receiptTypes";
+import { sampleProducts, sampleCustomers, sampleUsers } from "../mock/receiptMockData";
+import { fetchAllReceipts } from "../service/receipt.service";
 
 export default function ReceiptManagement() {
   const navigate = useNavigate();
-  const [receipts, setReceipts] = useState<Receipt[]>(generateSampleReceipts());
-  const [filteredReceipts, setFilteredReceipts] = useState<Receipt[]>(receipts);
+  const [receipts, setReceipts] = useState<Receipt[]>([]);
+  const [filteredReceipts, setFilteredReceipts] = useState<Receipt[]>([]);
+  const [loadingReceipts, setLoadingReceipts] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>("");
@@ -111,7 +107,6 @@ export default function ReceiptManagement() {
 
   // Form state for new/edit receipt
   const [formData, setFormData] = useState({
-    customer: null as User | null,
     items: [] as ReceiptItem[],
     paymentMethod: "Cash" as Receipt["paymentMethod"],
     status: "Paid" as Receipt["status"],
@@ -144,12 +139,6 @@ export default function ReceiptManagement() {
       result = result.filter(
         (receipt) =>
           receipt.receiptNumber
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          receipt.customer?.firstName
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          receipt.customer?.lastName
             .toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
           receipt.items.some((item) =>
@@ -196,10 +185,26 @@ export default function ReceiptManagement() {
     dateRangeFilter,
   ]);
 
+  // load receipts from API
+  useEffect(() => {
+    const load = async () => {
+      setLoadingReceipts(true);
+      try {
+        const data = await fetchAllReceipts();
+        setReceipts(data);
+        setFilteredReceipts(data);
+      } catch (err) {
+        console.error("Failed to fetch receipts", err);
+      } finally {
+        setLoadingReceipts(false);
+      }
+    };
+    load();
+  }, []);
+
   const handleAddReceipt = () => {
     setCurrentReceipt(null);
     setFormData({
-      customer: null,
       items: [],
       paymentMethod: "Cash",
       status: "Paid",
@@ -211,7 +216,6 @@ export default function ReceiptManagement() {
   const handleEditReceipt = (receipt: Receipt) => {
     setCurrentReceipt(receipt);
     setFormData({
-      customer: receipt.customer,
       items: [...receipt.items],
       paymentMethod: receipt.paymentMethod,
       status: receipt.status,
@@ -286,7 +290,6 @@ export default function ReceiptManagement() {
       // Update existing receipt
       const updatedReceipt: Receipt = {
         ...currentReceipt,
-        customer: formData.customer,
         items: formData.items,
         subtotal,
         tax,
@@ -308,10 +311,8 @@ export default function ReceiptManagement() {
       // Add new receipt
       const newReceipt: Receipt = {
         id: `r${Date.now()}`,
-        receiptNumber: `REC-${new Date().getFullYear()}-${
-          1000 + receipts.length + 1
-        }`,
-        customer: formData.customer,
+        receiptNumber: `REC-${new Date().getFullYear()}-${1000 + receipts.length + 1
+          }`,
         items: formData.items,
         subtotal,
         tax,
@@ -718,11 +719,7 @@ export default function ReceiptManagement() {
                         <TableCell>
                           {receipt.createdAt.toLocaleDateString()}
                         </TableCell>
-                        <TableCell>
-                          {receipt.customer
-                            ? `${receipt.customer.firstName} ${receipt.customer.lastName}`
-                            : "Walk-in Customer"}
-                        </TableCell>
+
                         <TableCell>
                           <Chip
                             label={`${receipt.items.length} items`}
@@ -803,43 +800,7 @@ export default function ReceiptManagement() {
           </DialogTitle>
           <DialogContent dividers>
             <Grid container spacing={3}>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Autocomplete
-                  options={sampleCustomers}
-                  getOptionLabel={(option) =>
-                    `${option.firstName} ${option.lastName}`
-                  }
-                  value={formData.customer}
-                  onChange={(_, newValue) =>
-                    setFormData({ ...formData, customer: newValue })
-                  }
-                  renderInput={(params) => (
-                    <TextField {...params} label="Customer" fullWidth />
-                  )}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 3 }}>
-                <FormControl fullWidth>
-                  <InputLabel>Payment Method</InputLabel>
-                  <Select
-                    value={formData.paymentMethod}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        paymentMethod: e.target
-                          .value as Receipt["paymentMethod"],
-                      })
-                    }
-                    label="Payment Method"
-                  >
-                    <MenuItem value="Cash">Cash</MenuItem>
-                    <MenuItem value="Credit Card">Credit Card</MenuItem>
-                    <MenuItem value="Debit Card">Debit Card</MenuItem>
-                    <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
-                    <MenuItem value="Other">Other</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
+
               <Grid size={{ xs: 12, md: 3 }}>
                 <FormControl fullWidth>
                   <InputLabel>Status</InputLabel>
@@ -915,7 +876,7 @@ export default function ReceiptManagement() {
                   sx={{ mt: 2, maxHeight: 300, overflow: "auto" }}
                 >
                   <List dense>
-                    {formData.items.length === 0 ? (
+                    {/* {formData.items.length === 0 ? (
                       <ListItem>
                         <ListItemText primary="No items added yet" />
                       </ListItem>
@@ -924,11 +885,10 @@ export default function ReceiptManagement() {
                         <ListItem key={item.id}>
                           <ListItemText
                             primary={item.product.name}
-                            secondary={`${
-                              item.quantity
-                            } x $${item.price.toFixed(2)} = $${(
-                              item.quantity * item.price
-                            ).toFixed(2)}`}
+                            secondary={`${item.quantity
+                              } x $${item.price.toFixed(2)} = $${(
+                                item.quantity * item.price
+                              ).toFixed(2)}`}
                           />
                           <ListItemSecondaryAction>
                             <IconButton
@@ -940,7 +900,7 @@ export default function ReceiptManagement() {
                           </ListItemSecondaryAction>
                         </ListItem>
                       ))
-                    )}
+                    } */}
                   </List>
                 </Paper>
               </Grid>
@@ -1092,23 +1052,6 @@ export default function ReceiptManagement() {
                       <Typography variant="subtitle2" gutterBottom>
                         Customer Information
                       </Typography>
-                      <Paper variant="outlined" sx={{ p: 2 }}>
-                        {currentReceipt.customer ? (
-                          <>
-                            <Typography variant="body1">
-                              {currentReceipt.customer.firstName}{" "}
-                              {currentReceipt.customer.lastName}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {currentReceipt.customer.email}
-                            </Typography>
-                          </>
-                        ) : (
-                          <Typography variant="body1">
-                            Walk-in Customer
-                          </Typography>
-                        )}
-                      </Paper>
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
                       <Typography variant="subtitle2" gutterBottom>

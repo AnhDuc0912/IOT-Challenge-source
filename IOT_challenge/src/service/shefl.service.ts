@@ -22,6 +22,13 @@ export const fetchProducts = async (): Promise<Product[]> => {
 
 export const fetchShelves = async (): Promise<Shelf[]> => {
   const response = await axios.get(`${API_URL}/shelves`);
+  console.log(response);
+  
+  return response.data;
+};
+
+export const fetchShelfById = async (shelfId: string): Promise<Shelf[]> => {
+  const response = await axios.get(`${API_URL}/shelves/${shelfId}`);
   return response.data;
 };
 
@@ -32,6 +39,15 @@ export const createShelf = async (
 
   console.log(response);
   
+  return response.data;
+};
+
+export const updateShelf = async (
+  shelfId: string,
+  shelfData: Partial<Shelf>
+): Promise<Shelf> => {
+  const response = await axios.put(`${API_URL}/shelves/${shelfId}`, shelfData);
+  console.log(response);
   return response.data;
 };
 

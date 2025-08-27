@@ -14,12 +14,13 @@ import { useSelector } from "react-redux";
 import { createTask } from "../service/task.service";
 import { RootState } from "../store";
 import { useEffect } from "react";
+import { User } from "../types/userTypes";
 
 export interface TaskDialogProps {
   open: boolean;
   onClose: () => void;
   onSave: (taskData: any) => void;
-  employees: Array<{ id: string; name: string }>;
+  employees: User[];
 }
 
 const TaskDialog: React.FC<TaskDialogProps> = ({
@@ -148,8 +149,8 @@ const TaskDialog: React.FC<TaskDialogProps> = ({
           onChange={(e) => setAssignedTo(e.target.value)}
         >
           {employees.map((emp) => (
-            <MenuItem key={emp.id} value={emp.id}>
-              {emp.name}
+            <MenuItem key={emp._id} value={emp._id}>
+              {emp.fullName}
             </MenuItem>
           ))}
         </TextField>

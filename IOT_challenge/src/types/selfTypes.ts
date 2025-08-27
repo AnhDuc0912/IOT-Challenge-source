@@ -1,3 +1,5 @@
+import { User } from "./userTypes";
+
 export interface Product {
   _id?: string;
   product_id: string;
@@ -16,7 +18,7 @@ export interface Shelf {
   _id: string;
   shelf_id: string;
   shelf_name: string;
-  user_id: string;
+  user_id?: User | null;
   location: string;
   createdAt: Date;
 }

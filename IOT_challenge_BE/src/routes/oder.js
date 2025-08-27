@@ -6,5 +6,6 @@ const oderController = require('../controller/order.controller');
 // Order
 router.post('/', oderController.createOrderWithDetails);
 router.get('/', oderController.getOrders);
+router.get('/:id', oderController.getOrderDetail);
 
 module.exports = router;

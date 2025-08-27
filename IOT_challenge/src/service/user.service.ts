@@ -1,12 +1,11 @@
 import axios from "axios";
 import { CreateUserDTO, UpdateUserDTO, User } from "../types/userTypes";
-
 const apiUrl = import.meta.env.VITE_API_ENDPOINT;
 
 
 
 export async function getUsers(): Promise<User[]> {
-  const res = await axios.get("http://localhost:3000/api/users");
+  const res = await axios.get(apiUrl + "/users");
   return res.data; // data là mảng user từ BE
 }
 

@@ -62,7 +62,7 @@ const ShelfItemMenu: React.FC<ShelfItemMenuProps> = ({
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={onClose}>
         <MenuItem onClick={() => { onRemove(); onClose(); }}>Xóa</MenuItem>
         <MenuItem onClick={() => { onViewInfo(); onClose(); }}>Xem thông tin sản phẩm</MenuItem>
-        <MenuItem onClick={handleChangeQuantityClick}>Thay đổi số lượng sản phẩm</MenuItem>
+        {/* <MenuItem onClick={handleChangeQuantityClick}>Thay đổi số lượng sản phẩm</MenuItem> */}
         <MenuItem onClick={handleChangeThresholdClick}>Thay đổi ngưỡng báo hết hàng</MenuItem>
       </Menu>
       <Dialog open={openThreshold} onClose={() => setOpenThreshold(false)}>
@@ -75,7 +75,12 @@ const ShelfItemMenu: React.FC<ShelfItemMenuProps> = ({
             type="number"
             fullWidth
             value={newThreshold}
-            onChange={e => setNewThreshold(e.target.value)}
+            onChange={e => {
+              const val = e.target.value;
+              if (Number(val) < 0) return;
+              setNewThreshold(val);
+            }}
+            inputProps={{ min: 0 }}
           />
         </DialogContent>
         <DialogActions>
@@ -93,7 +98,12 @@ const ShelfItemMenu: React.FC<ShelfItemMenuProps> = ({
             type="number"
             fullWidth
             value={newQuantity}
-            onChange={e => setNewQuantity(e.target.value)}
+            onChange={e => {
+              const val = e.target.value;
+              if (Number(val) < 0) return; // Không cho số âm
+              setNewQuantity(val);
+            }}
+            inputProps={{ min: 0 }}
           />
         </DialogContent>
         <DialogActions>
