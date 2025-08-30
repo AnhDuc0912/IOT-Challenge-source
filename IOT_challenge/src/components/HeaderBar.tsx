@@ -1,36 +1,54 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   AppBar,
   Toolbar,
   Typography,
-  IconButton,
   Box,
-  Tabs,
-  Tab,
-  TextField,
   Button,
+  Snackbar,
+  Alert,
 } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import AddIcon from "@mui/icons-material/Add";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
 import NotificationBell from "./NotificationBell";
+import { logout } from "../store/user.actions";
+import HomeIcon from '@mui/icons-material/Home';
+import { Dashboard } from "@mui/icons-material";
 
 const HeaderBar: React.FC = () => {
   const [editingShelf, setEditingShelf] = useState<number | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [openNoAccess, setOpenNoAccess] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const isLoggedIn = useSelector((state: RootState) => state.user.user);
   const user = useSelector((state: RootState) => state.user.user);
-  console.log(user);
+  const isLoggedIn = Boolean(user);
 
   const dispatch = useDispatch();
 
+  useEffect(() => {
+    // nếu chưa đăng nhập => vào /login
+    if (!isLoggedIn) {
+      if (location.pathname !== "/login") navigate("/login");
+      return;
+    }
+
+    // nếu đã login nhưng không phải admin/manager => show snackbar (không redirect)
+    const role = (user?.role || "").toString().toLowerCase();
+    const allowed = role === "admin" || role === "manager";
+    if (!allowed) {
+      setOpenNoAccess(true);
+    }
+  }, [isLoggedIn, user?.role, navigate, location.pathname]);
+
+  const handleCloseNoAccess = (_?: any, reason?: string) => {
+    if (reason === "clickaway") return;
+    setOpenNoAccess(false);
+  };
+
   const handleMenuOpen = (e: React.MouseEvent, id: number) => {
-    // Implement menu logic here
     setEditingShelf(id);
   };
 
@@ -39,43 +57,23 @@ const HeaderBar: React.FC = () => {
       <AppBar position="fixed">
         <Toolbar>
           <Box sx={{ flexGrow: 1, display: "flex", alignItems: "center" }}>
-            <Button
-              color="inherit"
-              onClick={() => navigate("/")}
-              sx={{ ml: 2 }}
-            >
+            <Button color="inherit" onClick={() => navigate("/")} sx={{ ml: 2 }}>
+              <Dashboard />
+            </Button>
+            <Button color="inherit" onClick={() => navigate("/shelf")} sx={{ ml: 2 }}>
               Quản lý kệ
             </Button>
-            <Button
-              color="inherit"
-              onClick={() => navigate("/products")}
-              sx={{ ml: 2 }}
-            >
+            <Button color="inherit" onClick={() => navigate("/products")} sx={{ ml: 2 }}>
               Sản phẩm
             </Button>
-
-            <Button
-              color="inherit"
-              onClick={() => navigate("/receipts")}
-              sx={{ ml: 2 }}
-            >
+            <Button color="inherit" onClick={() => navigate("/combo")} sx={{ ml: 2 }}>
+              Combo
+            </Button>
+            <Button color="inherit" onClick={() => navigate("/receipts")} sx={{ ml: 2 }}>
               Hóa đơn
             </Button>
-
-            <Button
-              color="inherit"
-              onClick={() => navigate("/users")}
-              sx={{ ml: 2 }}
-            >
+            <Button color="inherit" onClick={() => navigate("/users")} sx={{ ml: 2 }}>
               Nhân sự
-            </Button>
-
-            <Button
-              color="inherit"
-              onClick={() => navigate("/tasks")}
-              sx={{ ml: 2 }}
-            >
-              Công việc
             </Button>
 
             <Box sx={{ ml: "auto" }}>
@@ -86,7 +84,8 @@ const HeaderBar: React.FC = () => {
                   <Button
                     color="inherit"
                     onClick={() => {
-                      //   dispatch(logout action) hoặc navigate("/logout")
+                      dispatch(logout() as any);
+                      navigate("/login");
                     }}
                     sx={{ ml: 2 }}
                   >
@@ -94,11 +93,7 @@ const HeaderBar: React.FC = () => {
                   </Button>
                 </Box>
               ) : (
-                <Button
-                  color="inherit"
-                  onClick={() => navigate("/login")}
-                  sx={{ ml: 2 }}
-                >
+                <Button color="inherit" onClick={() => navigate("/login")} sx={{ ml: 2 }}>
                   Đăng nhập
                 </Button>
               )}
@@ -106,9 +101,19 @@ const HeaderBar: React.FC = () => {
           </Box>
         </Toolbar>
       </AppBar>
-      <Box sx={{
-        pt: "64px"
-      }} />
+
+      <Snackbar
+        open={openNoAccess}
+        autoHideDuration={4000}
+        onClose={handleCloseNoAccess}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert onClose={handleCloseNoAccess} severity="error" sx={{ width: "100%" }}>
+          Bạn không có quyền truy cập
+        </Alert>
+      </Snackbar>
+
+      <Box sx={{ pt: "64px" }} />
     </>
   );
 };

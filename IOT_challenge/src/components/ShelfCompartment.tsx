@@ -144,7 +144,7 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
         isLoadCellError ? undefined : (e) => handleDrop(e, level, compartment)
       }
       sx={{
-        height: 120,
+        height: "24vh",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",

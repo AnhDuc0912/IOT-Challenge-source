@@ -343,27 +343,17 @@ export default function UserManagement() {
 
   // ======== UI ========
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-      {/* Header */}
-      <AppBar position="static">
-        <Toolbar>
-          <IconButton color="inherit" onClick={() => navigate("/")}>
-            <ArrowBackIcon />
-          </IconButton>
-          <PersonIcon sx={{ ml: 2, mr: 2 }} />
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            User Management
-          </Typography>
-          <Button
-            variant="contained"
-            color="secondary"
-            startIcon={<AddIcon />}
-            onClick={handleAddUser}
-          >
-            Add User
-          </Button>
-        </Toolbar>
-      </AppBar>
+    <Container sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+      <Box display="flex" justifyContent="flex-end">
+        <Button
+          variant="contained"
+          color="secondary"
+          startIcon={<AddIcon />}
+          onClick={handleAddUser}
+        >
+          Add User
+        </Button>
+      </Box>
 
       {/* Main Content */}
       <Container maxWidth="xl" sx={{ py: 4, flexGrow: 1 }}>
@@ -973,6 +963,6 @@ export default function UserManagement() {
           <AddIcon />
         </Fab>
       </Box>
-    </Box>
+    </Container>
   );
 }

@@ -1,29 +1,54 @@
 import paho.mqtt.client as mqtt
 import json
-import time
-import random
 
-# Hàm tạo dữ liệu giả
-def create_data():
-    return {
-        "id": "48:b0:2d:3d:2b:28",
-        "values": [random.randint(0, 100) for _ in range(15)]
-    }
+# Hàm khi kết nối thành công
+def on_connect(client, userdata, flags, rc):
+    print("✅ Đã kết nối với mã:", rc)
+    # Subscribe các topic
+    client.subscribe("shelf/sensor/environment")
+    client.subscribe("shelf/status/data")
+    client.subscribe("shelf/tracking/unpaid_customer")
+    client.subscribe("shelf/loadcell/quantity")
+    print("📡 Đã đăng ký các topic")
 
-# Tạo MQTT client sử dụng WebSocket
-client = mqtt.Client(client_id="ducxautrai",transport="websockets")
+# Hàm khi nhận được tin nhắn
+def on_message(client, userdata, msg):
+    try:
+        payload = json.loads(msg.payload.decode())
+        print(f"\n📩 Nhận từ topic: {msg.topic}")
 
-# Kết nối tới broker HiveMQ WebSocket (cloud)
+        if msg.topic == "shelf/sensor/environment":
+            print("ID:", payload.get("id"))
+            print("humidity:", payload.get("humidity"))
+            print("temperature:", payload.get("temperature"))
+            print("light:", payload.get("light"))
+            print("pressure:", payload.get("pressure"))
+
+        elif msg.topic == "shelf/status/data":
+            print("ID:", payload.get("id"))
+            print("shelf_status_lean:", payload.get("shelf_status_lean"))
+            print("shelf_status_shake:", payload.get("shelf_status_shake"))
+            print("date_time:", payload.get("date_time"))
+
+        elif msg.topic == "shelf/tracking/unpaid_customer":
+            print("ID:", payload.get("id"))
+            print("taken_quantity:", payload.get("taken_quantity"))
+            print("date_time:", payload.get("date_time"))
+
+        elif msg.topic == "shelf/loadcell/quantity":
+            print("ID:", payload.get("id"))
+            print("quantity:", payload.get("values"))
+
+    except Exception as e:
+        print("❌ Lỗi giải mã JSON:", e)
+
+# Tạo client MQTT dùng WebSocket
+client = mqtt.Client(transport="websockets")
+client.on_connect = on_connect
+client.on_message = on_message
+
+# Kết nối tới HiveMQ broker qua WebSocket
 client.connect("broker.hivemq.com", 8000, 60)
 
-# Vòng lặp gửi dữ liệu mỗi 5 giây
-try:
-    while True:
-        payload = json.dumps(create_data())
-        client.publish("shelf/loadcell/quantity", payload)
-        print(f"Đã gửi: {payload}")
-        time.sleep(5)
-
-except KeyboardInterrupt:
-    print("Dừng gửi dữ liệu.")
-    client.disconnect()
+# Vòng lặp lắng nghe tin nhắn
+client.loop_forever()

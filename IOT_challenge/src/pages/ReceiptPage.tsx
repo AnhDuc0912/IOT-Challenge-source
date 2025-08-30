@@ -239,7 +239,7 @@ export default function ReceiptManagement() {
       setReceipts((prev) => prev.filter((r) => r.id !== currentReceipt.id));
       setSnackbar({
         open: true,
-        message: `Receipt ${currentReceipt.receiptNumber} has been deleted`,
+        message: `Hóa đơn ${currentReceipt.receiptNumber} đã được xóa`,
         severity: "success",
       });
       setDeleteDialogOpen(false);
@@ -276,7 +276,7 @@ export default function ReceiptManagement() {
     if (formData.items.length === 0) {
       setSnackbar({
         open: true,
-        message: "Please add at least one item to the receipt",
+        message: "Vui lòng thêm ít nhất một mặt hàng vào hóa đơn",
         severity: "error",
       });
       return;
@@ -304,7 +304,7 @@ export default function ReceiptManagement() {
       );
       setSnackbar({
         open: true,
-        message: `Receipt ${currentReceipt.receiptNumber} has been updated`,
+        message: `Hóa đơn ${currentReceipt.receiptNumber} đã được cập nhật`,
         severity: "success",
       });
     } else {
@@ -327,7 +327,7 @@ export default function ReceiptManagement() {
       setReceipts((prev) => [...prev, newReceipt]);
       setSnackbar({
         open: true,
-        message: `Receipt ${newReceipt.receiptNumber} has been created`,
+        message: `Hóa đơn ${newReceipt.receiptNumber} đã được tạo`,
         severity: "success",
       });
     }
@@ -410,18 +410,6 @@ export default function ReceiptManagement() {
       <Box
         sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}
       >
-        {/* Header */}
-        <AppBar position="static">
-          <Toolbar>
-            <IconButton color="inherit" onClick={() => navigate("/")}>
-              <ArrowBackIcon />
-            </IconButton>
-            <ReceiptIcon sx={{ ml: 2, mr: 2 }} />
-            <Typography variant="h6" sx={{ flexGrow: 1 }}>
-              Receipt Management
-            </Typography>
-          </Toolbar>
-        </AppBar>
 
         {/* Main Content */}
         <Container maxWidth="xl" sx={{ py: 4, flexGrow: 1 }}>
@@ -443,7 +431,7 @@ export default function ReceiptManagement() {
                         gutterBottom
                         variant="overline"
                       >
-                        Total Receipts
+                        Tổng số hóa đơn
                       </Typography>
                       <Typography variant="h4">{totalReceipts}</Typography>
                     </Box>
@@ -470,7 +458,7 @@ export default function ReceiptManagement() {
                         gutterBottom
                         variant="overline"
                       >
-                        Total Sales
+                        Tổng doanh thu
                       </Typography>
                       <Typography variant="h4" color="primary.main">
                         ${totalSales.toFixed(2)}
@@ -499,7 +487,7 @@ export default function ReceiptManagement() {
                         gutterBottom
                         variant="overline"
                       >
-                        Paid Receipts
+                        Hóa đơn đã thanh toán
                       </Typography>
                       <Typography variant="h4" color="success.main">
                         {paidReceipts}
@@ -528,7 +516,7 @@ export default function ReceiptManagement() {
                         gutterBottom
                         variant="overline"
                       >
-                        Pending Receipts
+                        Hóa đơn chờ
                       </Typography>
                       <Typography variant="h4" color="warning.main">
                         {pendingReceipts}
@@ -555,7 +543,7 @@ export default function ReceiptManagement() {
             >
               <Box sx={{ display: "flex", alignItems: "center" }}>
                 <FilterListIcon sx={{ mr: 1 }} />
-                <Typography variant="h6">Filters</Typography>
+                <Typography variant="h6">Bộ lọc</Typography>
               </Box>
               <IconButton onClick={() => setExpandedFilters(!expandedFilters)}>
                 {expandedFilters ? <ExpandLessIcon /> : <ExpandMoreIcon />}
@@ -567,7 +555,7 @@ export default function ReceiptManagement() {
                 <Grid size={{ xs: 12, md: 3 }}>
                   <TextField
                     fullWidth
-                    placeholder="Search receipts..."
+                    placeholder="Tìm hóa đơn..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     InputProps={{
@@ -591,36 +579,36 @@ export default function ReceiptManagement() {
                 </Grid>
                 <Grid size={{ xs: 12, md: 3 }}>
                   <FormControl fullWidth>
-                    <InputLabel>Status</InputLabel>
+                    <InputLabel>Trạng thái</InputLabel>
                     <Select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      label="Status"
+                      label="Trạng thái"
                       displayEmpty
                     >
-                      <MenuItem value="">All Statuses</MenuItem>
-                      <MenuItem value="Paid">Paid</MenuItem>
-                      <MenuItem value="Pending">Pending</MenuItem>
-                      <MenuItem value="Cancelled">Cancelled</MenuItem>
-                      <MenuItem value="Refunded">Refunded</MenuItem>
+                      <MenuItem value="">Tất cả</MenuItem>
+                      <MenuItem value="Paid">Đã thanh toán</MenuItem>
+                      <MenuItem value="Pending">Đang chờ</MenuItem>
+                      <MenuItem value="Cancelled">Đã hủy</MenuItem>
+                      <MenuItem value="Refunded">Đã hoàn tiền</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
                 <Grid size={{ xs: 12, md: 3 }}>
                   <FormControl fullWidth>
-                    <InputLabel>Payment Method</InputLabel>
+                    <InputLabel>Phương thức thanh toán</InputLabel>
                     <Select
                       value={paymentMethodFilter}
                       onChange={(e) => setPaymentMethodFilter(e.target.value)}
-                      label="Payment Method"
+                      label="Phương thức thanh toán"
                       displayEmpty
                     >
-                      <MenuItem value="">All Payment Methods</MenuItem>
-                      <MenuItem value="Cash">Cash</MenuItem>
-                      <MenuItem value="Credit Card">Credit Card</MenuItem>
-                      <MenuItem value="Debit Card">Debit Card</MenuItem>
-                      <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
-                      <MenuItem value="Other">Other</MenuItem>
+                      <MenuItem value="">Tất cả</MenuItem>
+                      <MenuItem value="Cash">Tiền mặt</MenuItem>
+                      <MenuItem value="Credit Card">Thẻ tín dụng</MenuItem>
+                      <MenuItem value="Debit Card">Thẻ ghi nợ</MenuItem>
+                      <MenuItem value="Bank Transfer">Chuyển khoản</MenuItem>
+                      <MenuItem value="Other">Khác</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -638,13 +626,13 @@ export default function ReceiptManagement() {
                       !dateRangeFilter.end
                     }
                   >
-                    Clear Filters
+                    Xóa bộ lọc
                   </Button>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <Box sx={{ display: "flex", gap: 2 }}>
                     <DatePicker
-                      label="Start Date"
+                      label="Từ ngày"
                       value={dateRangeFilter.start}
                       onChange={(date) =>
                         setDateRangeFilter({ ...dateRangeFilter, start: date })
@@ -652,7 +640,7 @@ export default function ReceiptManagement() {
                       slotProps={{ textField: { fullWidth: true } }}
                     />
                     <DatePicker
-                      label="End Date"
+                      label="Đến ngày"
                       value={dateRangeFilter.end}
                       onChange={(date) =>
                         setDateRangeFilter({ ...dateRangeFilter, end: date })
@@ -671,10 +659,10 @@ export default function ReceiptManagement() {
               value={tabValue}
               onChange={(_, newValue) => setTabValue(newValue)}
             >
-              <Tab label="All Receipts" />
-              <Tab label="Paid" />
-              <Tab label="Pending" />
-              <Tab label="Cancelled/Refunded" />
+              <Tab label="Tất cả" />
+              <Tab label="Đã thanh toán" />
+              <Tab label="Đang chờ" />
+              <Tab label="Đã hủy/Hoàn tiền" />
             </Tabs>
           </Box>
 
@@ -684,14 +672,13 @@ export default function ReceiptManagement() {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Receipt #</TableCell>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Customer</TableCell>
-                    <TableCell>Items</TableCell>
-                    <TableCell>Total</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Payment Method</TableCell>
-                    <TableCell>Actions</TableCell>
+                    <TableCell>Số hóa đơn</TableCell>
+                    <TableCell>Ngày</TableCell>
+                    <TableCell>Số mặt hàng</TableCell>
+                    <TableCell>Tổng</TableCell>
+                    <TableCell>Trạng thái</TableCell>
+                    <TableCell>Thanh toán</TableCell>
+                    <TableCell>Thao tác</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -722,7 +709,7 @@ export default function ReceiptManagement() {
 
                         <TableCell>
                           <Chip
-                            label={`${receipt.items.length} items`}
+                            label={`${receipt.items.length} mặt hàng`}
                             size="small"
                           />
                         </TableCell>
@@ -730,7 +717,7 @@ export default function ReceiptManagement() {
                         <TableCell>
                           <Chip
                             icon={getStatusIcon(receipt.status)}
-                            label={receipt.status}
+                            label={receipt.status === "Paid" ? "Đã thanh toán" : receipt.status === "Pending" ? "Đang chờ" : receipt.status}
                             color={getStatusColor(receipt.status) as any}
                             size="small"
                           />
@@ -796,14 +783,14 @@ export default function ReceiptManagement() {
           fullWidth
         >
           <DialogTitle>
-            {currentReceipt ? "Edit Receipt" : "Create New Receipt"}
+            {currentReceipt ? "Chỉnh sửa hóa đơn" : "Tạo hóa đơn mới"}
           </DialogTitle>
           <DialogContent dividers>
             <Grid container spacing={3}>
 
               <Grid size={{ xs: 12, md: 3 }}>
                 <FormControl fullWidth>
-                  <InputLabel>Status</InputLabel>
+                  <InputLabel>Trạng thái</InputLabel>
                   <Select
                     value={formData.status}
                     onChange={(e) =>
@@ -812,19 +799,19 @@ export default function ReceiptManagement() {
                         status: e.target.value as Receipt["status"],
                       })
                     }
-                    label="Status"
+                    label="Trạng thái"
                   >
-                    <MenuItem value="Paid">Paid</MenuItem>
-                    <MenuItem value="Pending">Pending</MenuItem>
-                    <MenuItem value="Cancelled">Cancelled</MenuItem>
-                    <MenuItem value="Refunded">Refunded</MenuItem>
+                    <MenuItem value="Paid">Đã thanh toán</MenuItem>
+                    <MenuItem value="Pending">Đang chờ</MenuItem>
+                    <MenuItem value="Cancelled">Đã hủy</MenuItem>
+                    <MenuItem value="Refunded">Đã hoàn tiền</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
 
               <Grid size={12}>
                 <Divider sx={{ my: 2 }}>
-                  <Chip label="Items" />
+                  <Chip label="Mặt hàng" />
                 </Divider>
               </Grid>
 
@@ -838,13 +825,13 @@ export default function ReceiptManagement() {
                   value={currentProduct}
                   onChange={(_, newValue) => setCurrentProduct(newValue)}
                   renderInput={(params) => (
-                    <TextField {...params} label="Select Product" fullWidth />
+                    <TextField {...params} label="Chọn sản phẩm" fullWidth />
                   )}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 3 }}>
                 <TextField
-                  label="Quantity"
+                  label="Số lượng"
                   type="number"
                   value={currentQuantity}
                   onChange={(e) =>
@@ -865,7 +852,7 @@ export default function ReceiptManagement() {
                   fullWidth
                   sx={{ height: "100%" }}
                 >
-                  Add Item
+                  Thêm mặt hàng
                 </Button>
               </Grid>
 
@@ -876,9 +863,10 @@ export default function ReceiptManagement() {
                   sx={{ mt: 2, maxHeight: 300, overflow: "auto" }}
                 >
                   <List dense>
-                    {/* {formData.items.length === 0 ? (
+                    {/* items rendered here */}
+                    {formData.items.length === 0 ? (
                       <ListItem>
-                        <ListItemText primary="No items added yet" />
+                        <ListItemText primary="Chưa có mặt hàng nào" />
                       </ListItem>
                     ) : (
                       formData.items.map((item) => (
@@ -900,7 +888,7 @@ export default function ReceiptManagement() {
                           </ListItemSecondaryAction>
                         </ListItem>
                       ))
-                    } */}
+                    )}
                   </List>
                 </Paper>
               </Grid>
@@ -911,7 +899,7 @@ export default function ReceiptManagement() {
                   <Grid container spacing={2}>
                     <Grid size={{ xs: 12, md: 4 }}>
                       <Typography variant="body2" color="text.secondary">
-                        Subtotal:
+                        Tạm tính:
                       </Typography>
                       <Typography variant="h6">
                         ${calculateSubtotal(formData.items).toFixed(2)}
@@ -919,7 +907,7 @@ export default function ReceiptManagement() {
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>
                       <Typography variant="body2" color="text.secondary">
-                        Tax (8%):
+                        Thuế (8%):
                       </Typography>
                       <Typography variant="h6">
                         $
@@ -930,7 +918,7 @@ export default function ReceiptManagement() {
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>
                       <Typography variant="body2" color="text.secondary">
-                        Total:
+                        Tổng:
                       </Typography>
                       <Typography
                         variant="h6"
@@ -950,7 +938,7 @@ export default function ReceiptManagement() {
 
               <Grid size={12}>
                 <TextField
-                  label="Notes"
+                  label="Ghi chú"
                   multiline
                   rows={3}
                   value={formData.notes}
@@ -964,13 +952,13 @@ export default function ReceiptManagement() {
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button onClick={() => setDialogOpen(false)}>Hủy</Button>
             <Button
               variant="contained"
               onClick={handleSaveReceipt}
               startIcon={<SaveIcon />}
             >
-              {currentReceipt ? "Update Receipt" : "Create Receipt"}
+              {currentReceipt ? "Cập nhật" : "Tạo hóa đơn"}
             </Button>
           </DialogActions>
         </Dialog>
@@ -990,7 +978,7 @@ export default function ReceiptManagement() {
                 alignItems: "center",
               }}
             >
-              <Typography variant="h6">Receipt Details</Typography>
+              <Typography variant="h6">Chi tiết hóa đơn</Typography>
               <Box>
                 <IconButton onClick={handlePrintReceipt}>
                   <PrintIcon />
@@ -1014,7 +1002,7 @@ export default function ReceiptManagement() {
                   >
                     <Box>
                       <Typography variant="h5" gutterBottom>
-                        Receipt #{currentReceipt.receiptNumber}
+                        Hóa đơn #{currentReceipt.receiptNumber}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         <CalendarIcon
@@ -1024,7 +1012,7 @@ export default function ReceiptManagement() {
                             verticalAlign: "text-bottom",
                           }}
                         />
-                        Date: {currentReceipt.createdAt.toLocaleDateString()}
+                        Ngày: {currentReceipt.createdAt.toLocaleDateString()}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         <PersonIcon
@@ -1034,12 +1022,18 @@ export default function ReceiptManagement() {
                             verticalAlign: "text-bottom",
                           }}
                         />
-                        Created by: {currentReceipt.createdBy.firstName}{" "}
+                        Người tạo: {currentReceipt.createdBy.firstName}{" "}
                         {currentReceipt.createdBy.lastName}
                       </Typography>
                     </Box>
                     <Chip
-                      label={currentReceipt.status}
+                      label={
+                        currentReceipt.status === "Paid"
+                          ? "Đã thanh toán"
+                          : currentReceipt.status === "Pending"
+                          ? "Đang chờ"
+                          : currentReceipt.status
+                      }
                       color={getStatusColor(currentReceipt.status) as any}
                       icon={getStatusIcon(currentReceipt.status)}
                     />
@@ -1050,36 +1044,36 @@ export default function ReceiptManagement() {
                   <Grid container spacing={2}>
                     <Grid size={{ xs: 12, md: 6 }}>
                       <Typography variant="subtitle2" gutterBottom>
-                        Customer Information
+                        Thông tin khách hàng
                       </Typography>
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
                       <Typography variant="subtitle2" gutterBottom>
-                        Payment Information
+                        Thông tin thanh toán
                       </Typography>
                       <Paper variant="outlined" sx={{ p: 2 }}>
                         <Typography variant="body1">
-                          Method: {currentReceipt.paymentMethod}
+                          Phương thức: {currentReceipt.paymentMethod}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Status: {currentReceipt.status}
+                          Trạng thái: {currentReceipt.status}
                         </Typography>
                       </Paper>
                     </Grid>
                   </Grid>
 
                   <Typography variant="subtitle2" sx={{ mt: 3, mb: 1 }}>
-                    Items
+                    Mặt hàng
                   </Typography>
                   <TableContainer component={Paper} variant="outlined">
                     <Table size="small">
                       <TableHead>
                         <TableRow>
-                          <TableCell>Product</TableCell>
+                          <TableCell>Sản phẩm</TableCell>
                           <TableCell>SKU</TableCell>
-                          <TableCell align="right">Price</TableCell>
-                          <TableCell align="right">Quantity</TableCell>
-                          <TableCell align="right">Total</TableCell>
+                          <TableCell align="right">Giá</TableCell>
+                          <TableCell align="right">Số lượng</TableCell>
+                          <TableCell align="right">Thành tiền</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -1107,7 +1101,7 @@ export default function ReceiptManagement() {
                       <Grid size={{ xs: 12, md: 8 }}>
                         {currentReceipt.notes && (
                           <Box sx={{ mt: 2 }}>
-                            <Typography variant="subtitle2">Notes:</Typography>
+                            <Typography variant="subtitle2">Ghi chú:</Typography>
                             <Typography variant="body2">
                               {currentReceipt.notes}
                             </Typography>
@@ -1121,7 +1115,7 @@ export default function ReceiptManagement() {
                             justifyContent: "space-between",
                           }}
                         >
-                          <Typography variant="body1">Subtotal:</Typography>
+                          <Typography variant="body1">Tạm tính:</Typography>
                           <Typography variant="body1">
                             ${currentReceipt.subtotal.toFixed(2)}
                           </Typography>
@@ -1133,7 +1127,7 @@ export default function ReceiptManagement() {
                             mt: 1,
                           }}
                         >
-                          <Typography variant="body1">Tax (8%):</Typography>
+                          <Typography variant="body1">Thuế (8%):</Typography>
                           <Typography variant="body1">
                             ${currentReceipt.tax.toFixed(2)}
                           </Typography>
@@ -1145,7 +1139,7 @@ export default function ReceiptManagement() {
                             justifyContent: "space-between",
                           }}
                         >
-                          <Typography variant="h6">Total:</Typography>
+                          <Typography variant="h6">Tổng:</Typography>
                           <Typography variant="h6" color="primary.main">
                             ${currentReceipt.total.toFixed(2)}
                           </Typography>
@@ -1158,7 +1152,7 @@ export default function ReceiptManagement() {
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setReceiptDetailDialog(false)}>Close</Button>
+            <Button onClick={() => setReceiptDetailDialog(false)}>Đóng</Button>
             <Button
               variant="outlined"
               startIcon={<EditIcon />}
@@ -1167,14 +1161,14 @@ export default function ReceiptManagement() {
                 if (currentReceipt) handleEditReceipt(currentReceipt);
               }}
             >
-              Edit
+              Chỉnh sửa
             </Button>
             <Button
               variant="contained"
               startIcon={<PrintIcon />}
               onClick={handlePrintReceipt}
             >
-              Print
+              In
             </Button>
           </DialogActions>
         </Dialog>
@@ -1184,22 +1178,22 @@ export default function ReceiptManagement() {
           open={deleteDialogOpen}
           onClose={() => setDeleteDialogOpen(false)}
         >
-          <DialogTitle>Confirm Delete</DialogTitle>
+          <DialogTitle>Xác nhận xóa</DialogTitle>
           <DialogContent>
             <Typography>
-              Are you sure you want to delete receipt{" "}
-              <strong>{currentReceipt?.receiptNumber}</strong>? This action
-              cannot be undone.
+              Bạn có chắc muốn xóa hóa đơn{" "}
+              <strong>{currentReceipt?.receiptNumber}</strong>? Hành động này
+              không thể hoàn tác.
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            <Button onClick={() => setDeleteDialogOpen(false)}>Hủy</Button>
             <Button
               variant="contained"
               color="error"
               onClick={confirmDeleteReceipt}
             >
-              Delete
+              Xóa
             </Button>
           </DialogActions>
         </Dialog>

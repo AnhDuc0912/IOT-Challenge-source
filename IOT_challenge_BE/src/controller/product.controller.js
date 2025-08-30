@@ -11,7 +11,7 @@ exports.createProduct = async (req, res) => {
       price,
       stock
     } = req.body;
-    const img_url = req.file ? `${process.env.APP_ADDRESS}/uploads/${req.file.filename}` : "";
+    const img_url = req.file ? `/uploads/${req.file.filename}` : "";
 
     const product = new Product({
       product_id,

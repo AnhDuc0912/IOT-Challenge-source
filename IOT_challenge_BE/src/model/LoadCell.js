@@ -22,11 +22,6 @@ const LoadCellSchema = new mongoose.Schema({
     ref: "Shelf",
     required: true,
   },
-  quantity: {
-    type: Number,
-    required: true,
-  },
-
   floor: {
     type: Number,
     required: true,

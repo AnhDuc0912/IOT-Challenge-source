@@ -31,11 +31,12 @@ function checkFileType(file, cb) {
 
 // Init Upload
 const upload = multer({
-  storage: storage,
-  limits: { fileSize: 100000000 }, // 1MB
-  fileFilter: function (req, file, cb) {
-    checkFileType(file, cb);
-  },
-}).single("product_image");
+  storage,
+  limits: { fileSize: 100000000 },
+  fileFilter: (req, file, cb) => checkFileType(file, cb),
+}).fields([
+  { name: "image", maxCount: 1 },
+  { name: "product_image", maxCount: 1 },
+]);
 
 module.exports = upload;

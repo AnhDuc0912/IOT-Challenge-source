@@ -7,13 +7,14 @@ import {
   Button,
   TextField,
   Box,
-  Typography,
   MenuItem,
+  Checkbox,
+  ListItemText,
 } from "@mui/material";
 import { Shelf, LoadCell } from "../types/selfTypes";
-import { getEmployees, getUsers } from "../service/user.service";
+import { getEmployees } from "../service/user.service";
 import { User } from "../types/userTypes";
-import { updateShelf } from "../service/shefl.service"; // Thêm dòng này ở đầu file
+import { updateShelf } from "../service/shefl.service";
 
 interface ShelfInfoDialogProps {
   open: boolean;
@@ -29,36 +30,52 @@ const ShelfInfoDialog: React.FC<ShelfInfoDialogProps> = ({
   loadCells = [],
 }) => {
   const [employees, setEmployees] = useState<User[]>([]);
-  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (open) {
       getEmployees().then((users) => {
         setEmployees(users);
       });
-      // Nếu shelf có user_id thì set luôn
-      setSelectedUserId(
-        typeof shelf?.user_id === "object"
-          ? String(shelf.user_id?._id)
-          : ""
-      );
     }
-  }, [open, shelf]);
+  }, [open]);
 
-  const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedUserId(e.target.value);
-    // Nếu muốn gọi API cập nhật, gọi tại đây
-    // updateShelf(shelf._id, { user_id: e.target.value });
+  useEffect(() => {
+    if (!shelf) {
+      setSelectedUserIds([]);
+      return;
+    }
+    // shelf.user_id có thể là mảng object / mảng id / single object / single id
+    const u = shelf.user_id;
+    if (!u) {
+      setSelectedUserIds([]);
+    } else if (Array.isArray(u)) {
+      const ids = u.map((it: any) =>
+        typeof it === "string" ? it : it?._id ?? String(it)
+      );
+      setSelectedUserIds(ids);
+    } else {
+      // single
+      const id = typeof u === "string" ? u : u._id ?? String(u);
+      setSelectedUserIds([id]);
+    }
+  }, [shelf]);
+
+  const handleUserChange = (e: any) => {
+    const value = e.target.value;
+    // value may be string (comma) or array
+    const ids = typeof value === "string" ? value.split(",") : value;
+    setSelectedUserIds(ids);
   };
 
   const handUpdateShelf = async (shelf_id: string) => {
     try {
-      if (!selectedUserId) {
-        alert("Vui lòng chọn người phụ trách!");
+      if (!selectedUserIds || selectedUserIds.length === 0) {
+        alert("Vui lòng chọn ít nhất một người phụ trách!");
         return;
       }
 
-      await updateShelf(shelf_id, { user_id: selectedUserId } as any);
+      await updateShelf(shelf_id, { user_id: selectedUserIds } as any);
       alert("Cập nhật người phụ trách thành công!");
       onClose();
     } catch (error) {
@@ -66,8 +83,6 @@ const ShelfInfoDialog: React.FC<ShelfInfoDialogProps> = ({
       alert("Cập nhật người phụ trách thất bại!");
     }
   };
-
-
 
   if (!shelf) return null;
 
@@ -94,20 +109,33 @@ const ShelfInfoDialog: React.FC<ShelfInfoDialogProps> = ({
             fullWidth
             margin="normal"
           />
+
           <TextField
             select
             label="Người phụ trách"
-            value={selectedUserId}
+            value={selectedUserIds}
             fullWidth
             margin="normal"
             onChange={handleUserChange}
+            SelectProps={{
+              multiple: true,
+              renderValue: (selected: any) =>
+                (selected as string[])
+                  .map(
+                    (id) =>
+                      employees.find((e) => e._id === id)?.fullName ?? id
+                  )
+                  .join(", "),
+            }}
           >
             {employees.map((emp) => (
               <MenuItem key={emp._id} value={emp._id}>
-                {emp.fullName}
+                <Checkbox checked={selectedUserIds.indexOf(emp._id) > -1} />
+                <ListItemText primary={emp.fullName ?? emp.username} />
               </MenuItem>
             ))}
           </TextField>
+
           <TextField
             label="Ngày tạo"
             value={
@@ -130,7 +158,6 @@ const ShelfInfoDialog: React.FC<ShelfInfoDialogProps> = ({
         </Button>
         <Button onClick={onClose}>Đóng</Button>
       </DialogActions>
-
     </Dialog>
   );
 };

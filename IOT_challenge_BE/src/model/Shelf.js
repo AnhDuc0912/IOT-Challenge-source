@@ -10,10 +10,10 @@ const shelfSchema = new mongoose.Schema({
         type: String,
         required: true
     }, // Tên kệ
-    user_id: {
-        type: mongoose.Schema.ObjectId,
+    user_id: [{
+        type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-    }, // Người phụ trách
+    }],
     location: {
         type: String,
         required: true

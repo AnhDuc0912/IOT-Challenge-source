@@ -211,7 +211,7 @@ export default function ShelfInterface() {
         _id: Date.now().toString(),
         shelf_id: `S${Date.now()}`,
         shelf_name: newShelfName.trim(),
-        user: null,
+        user_id: null,
         location: "",
         createdAt: new Date(),
       };
@@ -536,7 +536,6 @@ export default function ShelfInterface() {
         sx={{
           flexGrow: 1,
           p: 3,
-          mt: 8,
           ml: sidebarOpen ? 0 : "-280px",
           transition: "margin-left 0.3s ease",
         }}
