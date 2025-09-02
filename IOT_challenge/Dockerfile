@@ -1,27 +1,22 @@
-# Stage build frontend
-FROM node:20-alpine AS builder
+# ---------- Build stage ----------
+FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 
-# 1) Chỉ copy package*.json trước để cache tốt
+# Cài deps theo nền tảng Linux hiện tại
 COPY package*.json ./
-
-# 2) XÓA lockfile cũ & cài deps theo nền tảng hiện tại (alpine/musl)
+# Nếu lockfile tạo ở OS khác, dùng npm install để regenerate lock theo Linux:
 RUN rm -f package-lock.json && npm install
 
-# 3) Copy source và env vào
+# Copy source + env (Vite sẽ tự load .env.production khi --mode production)
 COPY . .
-# (Bạn đang copy .env.production, ok)
-# COPY .env.production ./.env.production
+# Nếu bạn giữ file riêng:
+COPY .env.production ./.env.production
 
-# 4) Build
 RUN npm run build -- --mode production
 
-# Production stage
+# ---------- Production stage ----------
 FROM nginx:alpine
 # Vite output mặc định là /app/dist
 COPY --from=builder /app/dist /usr/share/nginx/html
 # Nginx conf tuỳ biến (nếu có)
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
