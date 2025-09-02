@@ -1,22 +1,26 @@
-# ---------- Build stage ----------
-FROM node:20-bookworm-slim AS builder
+# Build stage
+FROM node:20-alpine AS builder
+
 WORKDIR /app
 
-# Cài deps theo nền tảng Linux hiện tại
+# Copy package.json và package-lock.json
 COPY package*.json ./
-# Nếu lockfile tạo ở OS khác, dùng npm install để regenerate lock theo Linux:
-RUN rm -f package-lock.json && npm install
 
-# Copy source + env (Vite sẽ tự load .env.production khi --mode production)
+# Làm sạch cache và cài đặt dependencies
+RUN npm cache clean --force && npm install
+RUN npm install rollup --save-dev
+
+# Copy mã nguồn và tệp .env.production
 COPY . .
-# Nếu bạn giữ file riêng:
-COPY .env.production ./.env.production
+COPY .env.production ./
 
+# Build ứng dụng với chế độ production
 RUN npm run build -- --mode production
 
-# ---------- Production stage ----------
+# Production stage
 FROM nginx:alpine
-# Vite output mặc định là /app/dist
 COPY --from=builder /app/dist /usr/share/nginx/html
-# Nginx conf tuỳ biến (nếu có)
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
