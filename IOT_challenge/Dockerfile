@@ -1,24 +1,25 @@
-# Build stage
-FROM node:20-alpine AS builder
+# Stage build frontend
+FROM node:20-alpine AS frontend-builder
 WORKDIR /app
 
-# copy frontend package.json / lockfile
+# 1) Chỉ copy package*.json trước để cache tốt
 COPY package*.json ./
-RUN npm ci
 
-# copy all frontend sources
+# 2) XÓA lockfile cũ & cài deps theo nền tảng hiện tại (alpine/musl)
+RUN rm -f package-lock.json && npm install
+
+# 3) Copy source và env vào
 COPY . .
+# (Bạn đang copy .env.production, ok)
+# COPY .env.production ./.env.production
 
-# copy env for production if needed
-COPY .env.production ./
-
-# build
+# 4) Build
 RUN npm run build -- --mode production
 
 # Production stage
 FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
-# optional: copy your nginx.conf if exists
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
