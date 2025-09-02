@@ -17,6 +17,7 @@ export interface Product {
 export interface Shelf {
   _id: string;
   shelf_id: string;
+  mac_ip: string;
   shelf_name: string;
   user_id?: User | null;
   location: string;

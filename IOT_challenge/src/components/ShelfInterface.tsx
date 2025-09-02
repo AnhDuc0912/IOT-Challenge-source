@@ -29,7 +29,7 @@ import {
   Menu as MenuIcon,
   MoreVert as MoreVertIcon,
 } from "@mui/icons-material";
-import { Client } from "paho-mqtt";
+import createMqttClient from "../lib/mqttClient";
 import { useNavigate } from "react-router-dom";
 import ProductCard from "./ProductCard";
 import ShelfCompartment from "./ShelfCompartment";
@@ -70,7 +70,25 @@ export default function ShelfInterface() {
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
-  const [realtimeQuantities, setRealtimeQuantities] = useState<number[]>([]);
+  const [realtimeQuantities, setRealtimeQuantities] = useState<number[]>(() => {
+    try {
+      const raw = localStorage.getItem("realtime_quantity");
+      if (!raw) return [];
+      // try JSON first
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed.map((v) => Number(v) || 0);
+      } catch { /* not JSON, fallback */ }
+      // fallback: comma/whitespace separated string (e.g. "1,2,3")
+      return String(raw)
+        .split(/[\s,;]+/)
+        .map((s) => Number(s))
+        .filter((n) => !Number.isNaN(n));
+    } catch (e) {
+      return [];
+    }
+  });
+
   const [hasProductChange, setHasProductChange] = useState(false);
   const [viewChangesMode, setViewChangesMode] = useState(false);
   const [changesDialogOpen, setChangesDialogOpen] = useState(false);
@@ -141,44 +159,35 @@ export default function ShelfInterface() {
   }, [activeShelfId]);
 
   useEffect(() => {
-    const client = new Client(
-      "broker.hivemq.com",
-      8000,
-      "/mqtt",
-      "webclient-" + Math.random().toString(16).substr(2, 8)
-    );
-
-    client.onConnectionLost = (responseObject) => {
-      if (responseObject.errorCode !== 0) {
-        console.log("Connection lost:", responseObject.errorMessage);
-      }
-    };
-
-    client.onMessageArrived = (message) => {
-      try {
-        const arr = JSON.parse(message.payloadString);
-
-        setRealtimeQuantities(arr.values);
-      } catch (e) {
-        console.error("Invalid message format:", e);
-      }
-    };
-
-    client.connect({
-      onSuccess: () => {
-        console.log("Connected to MQTT broker");
-        client.subscribe("shelf/loadcell/quantity");
-      },
+    const mqtt = createMqttClient({
+      host: "broker.hivemq.com",
+      port: 8000,
+      path: "/mqtt",
       useSSL: false,
+      topics: ["shelf/loadcell/quantity"],
+      onConnect: () => {
+        console.log("Connected to MQTT broker");
+      },
+      onMessage: (topic, payload) => {
+        try {
+          const obj = JSON.parse(payload);
+          if (obj && Array.isArray(obj.values)) {
+            const vals = obj.values.map((v: any) => Number(v) || 0);
+            console.log(vals);
+            localStorage.setItem("realtime_quantity", JSON.stringify(vals));
+            setRealtimeQuantities(vals);
+          }
+        } catch (e) {
+          console.error("Invalid MQTT payload:", e);
+        }
+      },
       onFailure: (err) => {
         console.error("MQTT Connection failed:", err);
       },
     });
 
     return () => {
-      if (client.isConnected()) {
-        client.disconnect();
-      }
+      mqtt.disconnect();
     };
   }, []);
 
@@ -210,6 +219,7 @@ export default function ShelfInterface() {
       const newShelf: Shelf = {
         _id: Date.now().toString(),
         shelf_id: `S${Date.now()}`,
+        mac_ip: "",
         shelf_name: newShelfName.trim(),
         user_id: null,
         location: "",
@@ -300,14 +310,14 @@ export default function ShelfInterface() {
       if (targetCell) {
         // Cập nhật state loadCells
         setLoadCells((prev) =>
-          prev.map((cell) =>
+          prev.map((cell): LoadCell =>
             cell._id === targetCell._id
               ? {
-                ...cell,
-                product_id: product._id,
-                quantity: 1,
-                previous_product_id: cell.product_id // Lưu product_id hiện tại vào previous
-              }
+                  ...cell,
+                  product_id: (product._id ?? null) as string | null,
+                  quantity: 1,
+                  previous_product_id: (cell.product_id ?? null) as string | null, // đảm bảo không undefined
+                }
               : cell
           )
         );
@@ -317,12 +327,12 @@ export default function ShelfInterface() {
           prev.map((item) =>
             item._id === targetCell._id
               ? {
-                ...item,
-                product_id: product._id,
-                quantity: 1,
-                previous_product_id: item.product_id,
-                product: product
-              }
+                  ...item,
+                  product_id: (product._id ?? null) as string | null,
+                  quantity: 1,
+                  previous_product_id: (item.product_id ?? null) as string | null,
+                  product: product,
+                }
               : item
           )
         );
@@ -574,12 +584,12 @@ export default function ShelfInterface() {
             <ListItem
               sx={{ display: "list-item", listStyleType: "disc", py: 0.5 }}
             >
-              <ListItemText primary="200: lỗi sản phẩm đặt không đúng vị trí" />
+              <ListItemText primary="200: Số lượng sản phẩm trên ngăn vượt mức tối đa" />
             </ListItem>
             <ListItem
               sx={{ display: "list-item", listStyleType: "disc", py: 0.5 }}
             >
-              <ListItemText primary="222: lỗi sản phẩm đặt không đúng vị trí" />
+              <ListItemText primary="222: Sản phẩm trên ngăn không đúng" />
             </ListItem>
           </List>
 

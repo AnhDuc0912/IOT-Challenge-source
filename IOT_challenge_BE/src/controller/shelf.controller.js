@@ -41,10 +41,12 @@ exports.getShelfById = async (req, res) => {
 
 // POST /shelves
 exports.createShelf = async (req, res) => {
+  const session = await mongoose.startSession();
   try {
     const payload = coerceUserIdToObjectIdArray(req.body);
 
-    const existing = await Shelf.findOne({ shelf_id: payload.shelf_id });
+    // avoid duplicate shelf id early
+    const existing = await Shelf.findOne({ shelf_id: payload.shelf_id }).lean();
     if (existing) {
       return res.status(400).json({
         error: "Shelf already exists",
@@ -52,30 +54,43 @@ exports.createShelf = async (req, res) => {
       });
     }
 
-    const shelf = new Shelf(payload);
-    await shelf.save();
+    let createdShelf = null;
 
-    // Khởi tạo 15 load cells (3 tầng x 5 cột)
-    const loadCells = [];
-    const FLOORS = 3;
-    const COLUMNS = 5;
-    let idx = 1;
-    for (let floor = 1; floor <= FLOORS; floor++) {
-      for (let column = 1; column <= COLUMNS; column++) {
-        loadCells.push({
-          load_cell_id: idx++,
-          load_cell_name: `LC-${floor}-${column}`,
-          product_id: "",
-          shelf_id: shelf._id,
-          quantity: 0,
-          floor,
-          column,
-        });
+    await session.withTransaction(async () => {
+      const shelfDoc = new Shelf(payload);
+      await shelfDoc.save({ session });
+
+      // Khởi tạo 15 load cells (3 tầng x 5 cột)
+      const loadCells = [];
+      const FLOORS = 3;
+      const COLUMNS = 5;
+      let idx = 1;
+      for (let floor = 1; floor <= FLOORS; floor++) {
+        for (let column = 1; column <= COLUMNS; column++) {
+          loadCells.push({
+            load_cell_id: idx++,
+            load_cell_name: `LC-${floor}-${column}`,
+            // ensure null, not empty string
+            product_id: null,
+            shelf_id: shelfDoc._id,
+            quantity: 0,
+            floor,
+            column,
+          });
+        }
       }
-    }
-    await LoadCell.insertMany(loadCells);
+      // insertMany with session
+      await LoadCell.insertMany(loadCells, { session });
 
-    const populated = await Shelf.findById(shelf._id).populate({
+      // set createdShelf for returning after commit
+      createdShelf = shelfDoc;
+    });
+
+    // End session before populating (withTransaction committed)
+    session.endSession();
+
+    // populate outside transaction
+    const populated = await Shelf.findById(createdShelf._id).populate({
       path: "user_id",
       model: "User",
       select: "-password -__v",
@@ -86,6 +101,8 @@ exports.createShelf = async (req, res) => {
       message: "Shelf and 15 load cells created successfully.",
     });
   } catch (err) {
+    // ensure session ended
+    try { session.endSession(); } catch (e) {}
     res.status(400).json({ error: "Failed to create shelf or load cells", message: err.message });
   }
 };
@@ -94,6 +111,7 @@ exports.createShelf = async (req, res) => {
 exports.updateShelf = async (req, res) => {
   try {
     const updateData = coerceUserIdToObjectIdArray(req.body);
+    console.log(updateData);
 
     const shelf = await Shelf.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
@@ -109,10 +127,19 @@ exports.updateShelf = async (req, res) => {
 
 // DELETE /shelves/:id
 exports.deleteShelf = async (req, res) => {
+  const session = await mongoose.startSession();
   try {
-    await Shelf.findByIdAndDelete(req.params.id);
-    res.json({ message: "Shelf deleted successfully" });
+    await session.withTransaction(async () => {
+      // remove loadcells belonging to shelf first
+      await LoadCell.deleteMany({ shelf_id: req.params.id }).session(session);
+      // then remove shelf
+      const deleted = await Shelf.findByIdAndDelete(req.params.id, { session });
+      if (!deleted) throw new Error("Shelf not found");
+    });
+    session.endSession();
+    res.json({ message: "Shelf and associated load cells deleted successfully" });
   } catch (err) {
+    try { session.endSession(); } catch (e) {}
     res.status(500).json({ error: "Failed to delete shelf", message: err.message });
   }
 };

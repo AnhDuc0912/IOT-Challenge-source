@@ -7,7 +7,7 @@ const OderSchema = new mongoose.Schema({
   total_bill: { type: Number, required: true },
   status: {
     type: String,
-    enum: ['pending', 'processing', 'completed', 'cancelled'],
+    enum: ['pending', 'unpaid', 'paid', 'cancelled'],
     default: 'pending'
   },
   total: { type: Number, required: true, default: 0 }

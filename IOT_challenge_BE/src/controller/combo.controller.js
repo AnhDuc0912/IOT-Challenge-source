@@ -43,8 +43,8 @@ exports.createCombo = async (req, res) => {
   const expected = [
     "name",
     "description",
-    "current_price",
-    "original_price",
+    "price",
+    "oldPrice",
     "price",
     "oldPrice",
     "validFrom",
@@ -59,21 +59,19 @@ exports.createCombo = async (req, res) => {
     const {
       name,
       description,
-      current_price,
-      original_price,
       price,
       oldPrice,
       validFrom,
       validTo,
     } = req.body;
 
-    const cp = current_price ?? price;
-    const op = original_price ?? oldPrice;
+    const cp = price ?? price;
+    const op = oldPrice ?? oldPrice;
 
     if (!name || cp == null) {
       return res
         .status(400)
-        .json({ success: false, message: "name và current_price là bắt buộc" });
+        .json({ success: false, message: "name và price là bắt buộc" });
     }
 
     const productsRaw = parseProductsField(req.body.products);
@@ -87,8 +85,8 @@ exports.createCombo = async (req, res) => {
       name,
       description,
       image: file ? buildFileUrl(file) : (req.body.image || ""),
-      current_price: Number(cp),
-      original_price: op != null ? Number(op) : undefined,
+      price: Number(cp),
+      oldPrice: op != null ? Number(op) : undefined,
       validFrom: validFrom ? new Date(validFrom) : undefined,
       validTo: validTo ? new Date(validTo) : undefined,
       products,
@@ -156,15 +154,15 @@ exports.updateCombo = async (req, res) => {
       return res.status(400).json({ success: false, message: "Id không hợp lệ" });
 
     const body = { ...req.body };
-    if (body.price !== undefined && body.current_price === undefined) body.current_price = body.price;
-    if (body.oldPrice !== undefined && body.original_price === undefined) body.original_price = body.oldPrice;
+    if (body.price !== undefined && body.price === undefined) body.price = body.price;
+    if (body.oldPrice !== undefined && body.oldPrice === undefined) body.oldPrice = body.oldPrice;
 
     const update = {};
     const upFields = [
       "name",
       "description",
-      "current_price",
-      "original_price",
+      "price",
+      "oldPrice",
       "validFrom",
       "validTo",
       "products",
@@ -191,8 +189,8 @@ exports.updateCombo = async (req, res) => {
       update.products = productsRaw.filter(isValidObjectId);
     }
 
-    if (update.current_price !== undefined) update.current_price = Number(update.current_price);
-    if (update.original_price !== undefined) update.original_price = Number(update.original_price);
+    if (update.price !== undefined) update.price = Number(update.price);
+    if (update.oldPrice !== undefined) update.oldPrice = Number(update.oldPrice);
 
     const updated = await Combo.findByIdAndUpdate(id, update, { new: true }).populate("products");
     if (!updated) return res.status(404).json({ success: false, message: "Không tìm thấy combo" });

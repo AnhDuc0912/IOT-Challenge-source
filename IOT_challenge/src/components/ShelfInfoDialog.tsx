@@ -31,6 +31,13 @@ const ShelfInfoDialog: React.FC<ShelfInfoDialogProps> = ({
 }) => {
   const [employees, setEmployees] = useState<User[]>([]);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [shelfForm, setShelfForm] = useState({
+    shelf_id: "",
+    mac_ip: "",
+    shelf_name: "",
+    location: "",
+  });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -43,9 +50,17 @@ const ShelfInfoDialog: React.FC<ShelfInfoDialogProps> = ({
   useEffect(() => {
     if (!shelf) {
       setSelectedUserIds([]);
+      setShelfForm({ shelf_id: "", mac_ip: "", shelf_name: "", location: "" });
       return;
     }
     // shelf.user_id có thể là mảng object / mảng id / single object / single id
+    // cập nhật form từ shelf (cho phép sửa)
+    setShelfForm({
+      shelf_id: shelf.shelf_id ?? "",
+      mac_ip: shelf.mac_ip ?? "",
+      shelf_name: shelf.shelf_name ?? "",
+      location: shelf.location ?? "",
+    });
     const u = shelf.user_id;
     if (!u) {
       setSelectedUserIds([]);
@@ -70,17 +85,24 @@ const ShelfInfoDialog: React.FC<ShelfInfoDialogProps> = ({
 
   const handUpdateShelf = async (shelf_id: string) => {
     try {
-      if (!selectedUserIds || selectedUserIds.length === 0) {
-        alert("Vui lòng chọn ít nhất một người phụ trách!");
-        return;
-      }
+      // build payload with edited fields
+      const payload: any = {
+        shelf_id: shelfForm.shelf_id,
+        mac_ip: shelfForm.mac_ip,
+        shelf_name: shelfForm.shelf_name,
+        location: shelfForm.location,
+        user_id: selectedUserIds,
+      };
 
-      await updateShelf(shelf_id, { user_id: selectedUserIds } as any);
-      alert("Cập nhật người phụ trách thành công!");
+      setSaving(true);
+      await updateShelf(shelf_id, payload as any);
+      alert("Cập nhật kệ thành công!");
       onClose();
     } catch (error) {
-      console.error("Cập nhật người phụ trách thất bại", error);
-      alert("Cập nhật người phụ trách thất bại!");
+      console.error("Cập nhật kệ thất bại", error);
+      alert("Cập nhật kệ thất bại!");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -93,19 +115,37 @@ const ShelfInfoDialog: React.FC<ShelfInfoDialogProps> = ({
         <Box mb={2} component="form">
           <TextField
             label="Mã kệ"
-            value={shelf.shelf_id}
+            value={shelfForm.shelf_id}
+            onChange={(e) =>
+              setShelfForm((s) => ({ ...s, shelf_id: e.target.value }))
+            }
+            fullWidth
+            margin="normal"
+          />
+          <TextField
+            label="Địa chỉ MAC"
+            value={shelfForm.mac_ip}
+            onChange={(e) =>
+              setShelfForm((s) => ({ ...s, mac_ip: e.target.value }))
+            }
             fullWidth
             margin="normal"
           />
           <TextField
             label="Tên kệ"
-            value={shelf.shelf_name}
+            value={shelfForm.shelf_name}
+            onChange={(e) =>
+              setShelfForm((s) => ({ ...s, shelf_name: e.target.value }))
+            }
             fullWidth
             margin="normal"
           />
           <TextField
             label="Vị trí"
-            value={shelf.location ?? ""}
+            value={shelfForm.location}
+            onChange={(e) =>
+              setShelfForm((s) => ({ ...s, location: e.target.value }))
+            }
             fullWidth
             margin="normal"
           />
@@ -145,6 +185,7 @@ const ShelfInfoDialog: React.FC<ShelfInfoDialogProps> = ({
             }
             fullWidth
             margin="normal"
+            InputProps={{ readOnly: true }}
           />
         </Box>
       </DialogContent>
@@ -152,9 +193,10 @@ const ShelfInfoDialog: React.FC<ShelfInfoDialogProps> = ({
       <DialogActions>
         <Button
           color="secondary"
-          onClick={() => handUpdateShelf(shelf._id)} // Gọi updateShelf
+          onClick={() => handUpdateShelf(shelf._id)} // Gọi updateShelf với payload chứa field đã sửa
+          disabled={saving}
         >
-          Lưu
+          {saving ? "Đang lưu..." : "Lưu"}
         </Button>
         <Button onClick={onClose}>Đóng</Button>
       </DialogActions>

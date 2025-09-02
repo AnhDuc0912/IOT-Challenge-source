@@ -75,6 +75,12 @@ const HeaderBar: React.FC = () => {
             <Button color="inherit" onClick={() => navigate("/users")} sx={{ ml: 2 }}>
               Nhân sự
             </Button>
+            <Button color="inherit" onClick={() => navigate("/history")} sx={{ ml: 2 }}>
+              Lịch sử
+            </Button>
+            <Button color="inherit" onClick={() => navigate("/posters")} sx={{ ml: 2 }}>
+              Posters
+            </Button>
 
             <Box sx={{ ml: "auto" }}>
               {isLoggedIn ? (

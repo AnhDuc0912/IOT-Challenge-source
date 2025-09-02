@@ -3,8 +3,8 @@ export type Combo = {
   name: string;
   description?: string;
   image?: string;
-  current_price: number;
-  original_price: number;
+  price: number;
+  oldPrice: number;
   validFrom?: Date;
   validTo?: Date;
   products?: any[]; // populated product objects or ids

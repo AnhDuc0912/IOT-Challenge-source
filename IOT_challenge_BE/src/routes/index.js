@@ -9,6 +9,8 @@ const loadcellRoutes = require("./loadcell");
 const notificationRoutes = require("./notification");
 const taskRoutes = require("./task");
 const comboRoutes = require("./combo");
+const historyRoutes = require("./history");
+const posterRoutes = require("./poster");
 
 // Gắn các route con vào router chính
 router.use("/products", productRoutes);
@@ -19,6 +21,8 @@ router.use("/loadcell", loadcellRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/tasks", taskRoutes);
 router.use("/combos", comboRoutes);
+router.use("/histories", historyRoutes);
+router.use("/posters", posterRoutes);
 
 router.get('/health', (req, res) => {
   res.status(200).json({

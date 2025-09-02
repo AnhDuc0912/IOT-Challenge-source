@@ -27,6 +27,7 @@ const AddShelfDialog: React.FC<AddShelfDialogProps> = ({
   const [shelfId, setShelfId] = useState("");
   const [shelfName, setShelfName] = useState("");
   const [location, setLocation] = useState("");
+  const [macIp, setMacIp] = useState("");
   const [error, setError] = useState<string | null>(null);
   const user = useSelector((state: RootState) => state.user.user);
 
@@ -34,6 +35,7 @@ const AddShelfDialog: React.FC<AddShelfDialogProps> = ({
     setShelfId("");
     setShelfName("");
     setLocation("");
+    setMacIp("");
     setError(null);
     onClose();
   };
@@ -55,11 +57,20 @@ const AddShelfDialog: React.FC<AddShelfDialogProps> = ({
         shelf_name: shelfName,
         location: location,
         user_id: user._id,
-      };
+        mac_ip: macIp,
+      } as any;
 
-      await createShelf(shelfData);
-      onShelfAdded();
+      const created = await createShelf(shelfData);
+      // trả về shelf vừa tạo cho parent để cập nhật UI
+      try {
+        onShelfAdded(created);
+      } catch {
+        // ignore parent callback errors
+      }
       handleClose();
+
+      // reload page so list refreshes
+      window.location.reload();
     } catch (err) {
       setError("Thêm kệ hàng thất bại. Vui lòng thử lại.");
       console.error(err);
@@ -91,6 +102,17 @@ const AddShelfDialog: React.FC<AddShelfDialogProps> = ({
           variant="outlined"
           value={shelfName}
           onChange={(e) => setShelfName(e.target.value)}
+          sx={{ mb: 2 }}
+        />
+        <TextField
+          margin="dense"
+          id="macIp"
+          label="Địa chỉ MAC"
+          type="text"
+          fullWidth
+          variant="outlined"
+          value={macIp}
+          onChange={(e) => setMacIp(e.target.value)}
           sx={{ mb: 2 }}
         />
         <TextField

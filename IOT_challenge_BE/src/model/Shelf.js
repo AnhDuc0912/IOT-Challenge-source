@@ -8,8 +8,13 @@ const shelfSchema = new mongoose.Schema({
     }, // ID riêng
     shelf_name: {
         type: String,
-        required: true
+        required: true,
+        unique: true,
     }, // Tên kệ
+    mac_ip: {
+        type: String,
+        required: true
+    }, 
     user_id: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",

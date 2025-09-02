@@ -10,6 +10,8 @@ import RequireRole from "./components/RequireRole";
 import { Dashboard } from "@mui/icons-material";
 import DashboardPage from "./pages/DashboardPage";
 import ComboPage from "./pages/ComboPage";
+import HistoryPage from "./pages/HistoryPage";
+import PostersPage from "./pages/PostersPage";
 
 function App() {
   return (
@@ -30,6 +32,8 @@ function App() {
           <Route path="/users" element={<UserPage />} />
           <Route path="/tasks" element={<TaskPage />} />
           <Route path="/receipts" element={<ReceiptPage />} />
+          <Route path="/history" element={<HistoryPage />} />
+          <Route path="/posters" element={<PostersPage />} />
         </Route>
 
         <Route path="/login" element={<LoginPage />} />

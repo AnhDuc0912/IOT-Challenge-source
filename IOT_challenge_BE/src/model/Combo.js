@@ -10,8 +10,8 @@ const ComboSchema = new Schema(
     image: { type: String, default: "" },
 
     // pricing
-    current_price: { type: Number, required: true, min: 0 },
-    original_price: { type: Number, required: true, min: 0 },
+    price: { type: Number, required: true, min: 0 },
+    oldPrice: { type: Number, required: true, min: 0 },
 
     // validity window
     validFrom: { type: Date },

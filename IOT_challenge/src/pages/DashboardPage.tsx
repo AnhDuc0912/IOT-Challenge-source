@@ -1,6 +1,9 @@
 import React from "react";
 import { Box, Grid, Paper, Typography, Button, List, ListItem, ListItemText } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import ShelfRealtimePanel from "../components/ShelfRealtimePanel";
+import useMqtt from "../lib/useMqtt";
+import StatsCharts from "../components/StatsCharts";
 
 const StatCard = ({ title, value, onClick }) => (
   <Paper elevation={2} sx={{ p: 2, cursor: onClick ? "pointer" : "default" }} onClick={onClick}>
@@ -15,6 +18,19 @@ const StatCard = ({ title, value, onClick }) => (
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+
+  // connect to mqtt and subscribe topics
+  const { connected, sensor, loadcellQuantities, tracking, status } = useMqtt({
+    host: "broker.hivemq.com",
+    port: 8000,
+    path: "/mqtt",
+    topics: [
+      "shelf/sensor/environment",
+      "shelf/loadcell/quantity",
+      "shelf/tracking/unpaid_customer",
+      "shelf/status/data",
+    ],
+  });
 
   // UI-first: static mock data (no API)
   const stats = {
@@ -31,59 +47,40 @@ export default function DashboardPage() {
     "Product PRD-123 price updated",
   ];
 
+  const topProducts = [
+    { name: "Snack A", count: 42 },
+    { name: "Snack B", count: 28 },
+    { name: "Drink X", count: 18 },
+    { name: "Other", count: 12 },
+  ];
+
+  const revenueSeries = [
+    { period: "2025-06", revenue: 1200000 },
+    { period: "2025-07", revenue: 1850000 },
+    { period: "2025-08", revenue: 950000 },
+    { period: "2025-09", revenue: 2300000 },
+    { period: "2025-10", revenue: 1750000 },
+  ];
+
   return (
     <Box sx={{ p: 3 }}>
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid size={3}>
-          <StatCard title="Shelves" value={stats.shelves} onClick={() => navigate("/shelf")} />
-        </Grid>
-        <Grid size={3}>
-          <StatCard title="Products" value={stats.products} onClick={() => navigate("/products")} />
-        </Grid>
-        <Grid size={3}>
-          <StatCard title="Orders" value={stats.orders} onClick={() => navigate("/receipts")} />
-        </Grid>
-        <Grid size={3}>
-          <StatCard title="Users" value={stats.users} onClick={() => navigate("/users")} />
-        </Grid>
-      </Grid>
+      <Box sx={{ my: 2 }}>
+        <Typography variant="h6">Realtime kệ</Typography>
+        <Typography variant="caption" color="text.secondary">
+          MQTT: {connected ? "Đã kết nối" : "Đang ngắt kết nối"}
+        </Typography>
+        <ShelfRealtimePanel
+          sensor={sensor}
+          status={status}
+          useLocalStorageFallback={true}
+          sx={{ mt: 1 }}
+        />
+      </Box>
 
-      <Grid container spacing={2}>
-        <Grid size={6}>
-          <Paper elevation={2} sx={{ p: 2, minHeight: 200 }}>
-            <Typography variant="h6">Recent activity</Typography>
-            <List>
-              {recent.map((r, i) => (
-                <ListItem key={i} divider>
-                  <ListItemText primary={r} secondary={new Date().toLocaleString()} />
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
-        </Grid>
+      <Box>
+        <StatsCharts products={topProducts} revenue={revenueSeries} />
+      </Box>
 
-        <Grid size={6}>
-          <Paper elevation={2} sx={{ p: 2, minHeight: 200 }}>
-            <Typography variant="h6" gutterBottom>
-              Quick actions
-            </Typography>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              <Button variant="contained" onClick={() => navigate("/shelf")}>
-                Manage Shelves
-              </Button>
-              <Button variant="outlined" onClick={() => navigate("/products")}>
-                Manage Products
-              </Button>
-              <Button variant="outlined" onClick={() => navigate("/receipts")}>
-                View Orders
-              </Button>
-              <Button variant="outlined" onClick={() => navigate("/users")}>
-                Manage Users
-              </Button>
-            </Box>
-          </Paper>
-        </Grid>
-      </Grid>
     </Box>
   );
 }

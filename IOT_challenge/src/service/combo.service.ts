@@ -1,22 +1,19 @@
 import axios from "axios";
 import { Combo } from "../types/combo.type";
-
 const API_URL = import.meta.env.VITE_API_ENDPOINT;
 const IMG_PREFIX = import.meta.env.VITE_PREFIX_IMAGE;
 
-/**
- * Normalize backend combo to frontend Combo type and fix image url
- */
 function mapComboImage(c: any): Combo {
   const image = c.image ?? c.img ?? "";
   return {
     ...c,
-    image: image && !image.startsWith("http") ? (IMG_PREFIX || "") + image : image,
+    image: image && !image.startsWith("http") ? (IMG_PREFIX || "") + "/"  + image : image,
     // ensure numeric fields exist
-    current_price: Number(c.current_price ?? c.current_price ?? 0),
-    original_price: c.original_price !== undefined ? Number(c.original_price) : undefined,
+    price: Number(c.price ?? c.price ?? 0),
+    oldPrice: c.oldPrice !== undefined ? Number(c.oldPrice) : undefined,
   } as Combo;
 }
+
 
 export async function fetchCombos(params?: {
   page?: number;
@@ -47,79 +44,26 @@ export async function getComboById(id: string): Promise<Combo | null> {
   }
 }
 
-export async function createCombo(payload: {
-  name: string;
-  description?: string;
-  current_price: number;
-  original_price?: number;
-  validFrom?: string;
-  validTo?: string;
-  products?: string[]; // product ids
-  imageFile?: File | null;
-}): Promise<Combo | null> {
+// replace/create createCombo to accept FormData or plain object
+export async function createCombo(payload: FormData | Record<string, any>) {
   try {
-    const form = new FormData();
-    form.append("name", payload.name);
-    if (payload.description) form.append("description", payload.description);
-    form.append("current_price", String(payload.current_price));
-    if (payload.original_price !== undefined) form.append("original_price", String(payload.original_price));
-    if (payload.validFrom) form.append("validFrom", payload.validFrom);
-    if (payload.validTo) form.append("validTo", payload.validTo);
-    if (payload.products) payload.products.forEach((p) => form.append("products[]", p));
-    if (payload.imageFile) form.append("image", payload.imageFile);
-
-    const res = await axios.post(`${API_URL}/combos`, form, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    const data = res.data?.data ?? res.data;
-    return data ? mapComboImage(data) : null;
-  } catch (error) {
-    console.error("createCombo error", error);
-    throw error;
+    // If payload is FormData, let axios/browser set Content-Type (multipart/form-data with boundary)
+    const res = await axios.post(`${API_URL}/combos`, payload);
+    return res.data;
+  } catch (err: any) {
+    console.error("createCombo error", err);
+    throw err;
   }
 }
 
-export async function updateCombo(
-  id: string,
-  payload: {
-    name?: string;
-    description?: string;
-    current_price?: number;
-    original_price?: number;
-    validFrom?: string;
-    validTo?: string;
-    products?: string[];
-    imageFile?: File | null;
-    active?: boolean;
-  }
-): Promise<Combo | null> {
+// optionally update updateCombo if used with FormData
+export async function updateCombo(id: string, payload: FormData | Record<string, any>) {
   try {
-    // use FormData if file present, otherwise send JSON
-    if (payload.imageFile) {
-      const form = new FormData();
-      if (payload.name) form.append("name", payload.name);
-      if (payload.description) form.append("description", payload.description);
-      if (payload.current_price !== undefined) form.append("current_price", String(payload.current_price));
-      if (payload.original_price !== undefined) form.append("original_price", String(payload.original_price));
-      if (payload.validFrom) form.append("validFrom", payload.validFrom);
-      if (payload.validTo) form.append("validTo", payload.validTo);
-      if (payload.active !== undefined) form.append("active", String(payload.active));
-      if (payload.products) payload.products.forEach((p) => form.append("products[]", p));
-      form.append("image", payload.imageFile);
-      const res = await axios.put(`${API_URL}/combos/${id}`, form, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      const data = res.data?.data ?? res.data;
-      return data ? mapComboImage(data) : null;
-    } else {
-      const body: any = { ...payload };
-      const res = await axios.put(`${API_URL}/combos/${id}`, body);
-      const data = res.data?.data ?? res.data;
-      return data ? mapComboImage(data) : null;
-    }
-  } catch (error) {
-    console.error("updateCombo error", error);
-    throw error;
+    const res = await axios.put(`${API_URL}/combos/${id}`, payload);
+    return res.data;
+  } catch (err: any) {
+    console.error("updateCombo error", err);
+    throw err;
   }
 }
 

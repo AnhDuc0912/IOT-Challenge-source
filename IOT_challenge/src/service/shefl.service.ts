@@ -47,7 +47,6 @@ export const updateShelf = async (
   shelfData: Partial<Shelf>
 ): Promise<Shelf> => {
   const response = await axios.put(`${API_URL}/shelves/${shelfId}`, shelfData);
-  console.log(response);
   return response.data;
 };
 
@@ -63,3 +62,14 @@ export const fetchLoadCellsByShelfId = async (shelfId: string): Promise<LoadCell
   }
 };
 
+// new: delete shelf
+export const deleteShelf = async (shelfId: string): Promise<boolean> => {
+  try {
+    const response = await axios.delete(`${API_URL}/shelves/${shelfId}`);
+    console.log("deleteShelf response:", response);
+    return response.status >= 200 && response.status < 300;
+  } catch (error) {
+    console.error(`Error deleting shelf ${shelfId}:`, error);
+    return false;
+  }
+};

@@ -1,32 +1,41 @@
-const Product = require('../model/Product');
+const Product = require("../model/Product");
+const { pickUploadedFile, buildFileUrl } = require("../utils/upload.helper");
 
 exports.createProduct = async (req, res) => {
-
-  console.log(req.file);
+  console.log("Content-Type:", req.headers["content-type"]);
+  console.log("req.body keys:", Object.keys(req.body || {}));
+  console.log("req.files:", req.files);
+  console.log("req.file:", req.file);
 
   try {
+    const file = pickUploadedFile(req);
+    console.log("picked file:", file);
+
     const {
       product_id,
       product_name,
       price,
-      stock
+      stock,
+      img_url: bodyImgUrl,
     } = req.body;
-    const img_url = req.file ? `/uploads/${req.file.filename}` : "";
+
+    const img_url = file
+      ? buildFileUrl(file)
+      : (bodyImgUrl && String(bodyImgUrl).trim() ? String(bodyImgUrl).trim() : "/uploads/default.png");
 
     const product = new Product({
       product_id,
       product_name,
       img_url,
       price,
-      stock
+      stock,
     });
 
     await product.save();
     res.status(201).json(product);
   } catch (err) {
-    res.status(400).json({
-      error: err.message
-    });
+    console.error(err);
+    res.status(400).json({ error: err.message });
   }
 };
 
@@ -57,28 +66,26 @@ exports.getProductById = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
-    const updateData = {
-      ...req.body
-    };
-    if (req.file) {
-      updateData.img_url = `${process.env.APP_ADDRESS}/uploads/${req.file.filename}`;
+    const updateData = { ...req.body };
+    const file = pickUploadedFile(req);
+    if (file) updateData.img_url = buildFileUrl(file);
+    else if (Object.prototype.hasOwnProperty.call(req.body, "img_url")) {
+      const b = String(req.body.img_url || "").trim();
+      updateData.img_url = b ? b : "/uploads/default.png";
     }
 
-    console.log(updateData);
-    
+    if (updateData.price !== undefined) updateData.price = Number(updateData.price);
+    if (updateData.stock !== undefined) updateData.stock = Number(updateData.stock);
+
+    console.log("updateData:", updateData);
 
     const product = await Product.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
     });
-    if (!product)
-      return res.status(404).json({
-        error: "Product not found",
-      });
+    if (!product) return res.status(404).json({ error: "Product not found" });
     res.json(product);
   } catch (err) {
-    res.status(400).json({
-      error: err.message,
-    });
+    res.status(400).json({ error: err.message });
   }
 };
 

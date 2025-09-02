@@ -48,20 +48,16 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
   const [localThreshold, setLocalThreshold] = React.useState<
     number | undefined
   >(shelfItem && (shelfItem as any).threshold);
-  const [localQuantity, setLocalQuantity] = React.useState<number | undefined>(
-    shelfItem?.quantity
-  );
+  // REMOVED localQuantity state - use prop `quantity` directly
 
   React.useEffect(() => {
     setLocalProduct(shelfItem?.product ?? null);
     setLocalThreshold(shelfItem?.threshold);
-    setLocalQuantity(shelfItem?.quantity);
+    // localQuantity removed
   }, [shelfItem?.product, shelfItem]);
 
-  // Đồng bộ localQuantity với prop quantity (realtime từ cha)
+  // Đồng bộ lỗi loadcell dựa trên prop quantity
   React.useEffect(() => {
-    setLocalQuantity(quantity);
-
     // Kiểm tra lỗi loadcell
     if (quantity === 200 || quantity === 222 || quantity === 255) {
       setIsLoadCellError(quantity);
@@ -120,7 +116,7 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
           onUpdateQuantity(shelfItem._id, Number(newQuantity));
         }
 
-        setLocalQuantity(Number(newQuantity));
+        // localQuantity removed — parent should provide updated `quantity` prop
       } catch (err) {
         alert("Cập nhật số lượng thất bại!");
       }
@@ -136,6 +132,9 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
     // Xử lý lưu sản phẩm nếu cần
     handleCloseProductDialog();
   };
+
+  // Use `quantity` prop directly in UI and logic
+  const displayQuantity = quantity;
 
   return (
     <Paper
@@ -153,34 +152,34 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
         borderColor: isEmpty
           ? "grey.300"
           : isLoadCellError
-            ? "warning.main"
-            : localQuantity === 0
-              ? "error.main"
-              : localQuantity && localThreshold && localQuantity < localThreshold
-                ? "warning.main"
-                : "primary.main",
+          ? "warning.main"
+          : displayQuantity === 0
+          ? "error.main"
+          : displayQuantity && localThreshold && displayQuantity < localThreshold
+          ? "warning.main"
+          : "primary.main",
         backgroundColor: isEmpty ? "grey.50" : "background.paper",
         cursor: isEmpty
           ? "default"
           : isLoadCellError
-            ? "not-allowed"
-            : "pointer",
+          ? "not-allowed"
+          : "pointer",
         transition: "all 0.3s ease",
         "&:hover": {
           borderColor: isEmpty
             ? "grey.400"
             : isLoadCellError
-              ? "warning.dark"
-              : localQuantity === 0
-                ? "error.dark"
-                : localQuantity && localThreshold && localQuantity < localThreshold
-                  ? "warning.dark"
-                  : "primary.dark",
+            ? "warning.dark"
+            : displayQuantity === 0
+            ? "error.dark"
+            : displayQuantity && localThreshold && displayQuantity < localThreshold
+            ? "warning.dark"
+            : "primary.dark",
           backgroundColor: isEmpty ? "grey.100" : "grey.50",
         },
         opacity: isLoadCellError ? 0.7 : 1,
       }}
-    >   
+    >
       {!localProduct ? (
         <Typography variant="body2" color="text.secondary">
           Drop here
@@ -225,8 +224,8 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
                 {isLoadCellError}
               </Typography>
             </div>
-          ): null}
-          
+          ) : null}
+
           <div
             style={{
               width: "100%",
@@ -259,7 +258,7 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
               color="inherit"
               sx={{ display: "block" }}
             >
-              Số lượng: {localQuantity !== undefined ? localQuantity : "N/A"} -
+              Số lượng: {displayQuantity !== undefined ? displayQuantity : "N/A"} -
               <Typography
                 variant="caption"
                 color="text.white"
@@ -280,7 +279,7 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
         onChangeThreshold={handleChangeThreshold}
         onChangeQuantity={handleChangeQuantity}
         currentThreshold={localThreshold}
-        currentQuantity={localQuantity}
+        currentQuantity={quantity} // use prop directly
       />
       <ProductDialog
         open={productDialogOpen}
