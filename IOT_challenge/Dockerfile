@@ -1,5 +1,5 @@
 # Stage build frontend
-FROM node:20-alpine AS frontend-builder
+FROM node:20-alpine AS builder
 WORKDIR /app
 
 # 1) Chỉ copy package*.json trước để cache tốt
@@ -18,7 +18,9 @@ RUN npm run build -- --mode production
 
 # Production stage
 FROM nginx:alpine
+# Vite output mặc định là /app/dist
 COPY --from=builder /app/dist /usr/share/nginx/html
+# Nginx conf tuỳ biến (nếu có)
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
