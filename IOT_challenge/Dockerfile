@@ -1,26 +1,24 @@
 # Build stage
 FROM node:20-alpine AS builder
-
 WORKDIR /app
 
-# Copy package.json và package-lock.json
+# copy frontend package.json / lockfile
 COPY package*.json ./
+RUN npm ci
 
-# Làm sạch cache và cài đặt dependencies
-RUN npm cache clean --force && npm install
-RUN npm install rollup --save-dev
-
-# Copy mã nguồn và tệp .env.production
+# copy all frontend sources
 COPY . .
+
+# copy env for production if needed
 COPY .env.production ./
 
-# Build ứng dụng với chế độ production
+# build
 RUN npm run build -- --mode production
 
 # Production stage
 FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
+# optional: copy your nginx.conf if exists
+# COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
