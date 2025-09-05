@@ -1,36 +1,28 @@
+// ProductPage.tsx
 "use client";
 
 import React from "react";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Container,
   Typography,
   Grid,
-  Card,
-  CardContent,
-  CardMedia,
-  CardActions,
-  Button,
-  TextField,
-  InputAdornment,
+  Paper,
+  Tooltip,
   IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Chip,
-  Snackbar,
-  Alert,
-  Paper,
-  Divider,
-  Tooltip,
-  Fab,
+  TextField,
+  InputAdornment,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   TableContainer,
   Table,
   TableHead,
@@ -38,6 +30,9 @@ import {
   TableRow,
   TableCell,
   TablePagination,
+  Snackbar,
+  Alert,
+  Fab,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -45,8 +40,6 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Clear as ClearIcon,
-  Image as ImageIcon,
-  Save as SaveIcon,
   ViewModule as ViewModuleIcon,
   ViewList as ViewListIcon,
   Sort as SortIcon,
@@ -58,11 +51,12 @@ import {
   fetchProducts,
   addProduct,
   updateProduct,
+  deleteProduct,
+  getProductById,
 } from "../service/product.service";
 
 export default function ProductManagement() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -79,44 +73,56 @@ export default function ProductManagement() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Filter and sort products
+  // Fetch dữ liệu 1 lần khi mount
   useEffect(() => {
-    const fetchAndSetProducts = async () => {
-      let result = await fetchProducts();
-
-      // Apply search filter
-      if (searchTerm) {
-        result = result.filter((product) =>
-          product.product_name.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+    (async () => {
+      try {
+        const result = await fetchProducts();
+        setProducts(result ?? []);
+      } catch (e) {
+        setProducts([]);
       }
+    })();
+  }, []);
 
-      // Apply sorting
-      result.sort((a, b) => {
-        if (sortBy === "price") {
-          return sortDirection === "asc"
-            ? a.price - b.price
-            : b.price - a.price;
-        } else if (sortBy === "createdAt") {
-          const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return sortDirection === "asc" ? timeA - timeB : timeB - timeA;
-        } else {
-          const valueA = a[sortBy].toString().toLowerCase();
-          const valueB = b[sortBy].toString().toLowerCase();
-          return sortDirection === "asc"
-            ? valueA.localeCompare(valueB)
-            : valueB.localeCompare(valueA);
-        }
-      });
+  // Lọc + sắp xếp từ products (không tạo state phụ)
+  const filteredProducts = useMemo(() => {
+    let result = [...products];
 
-      setProducts(result);
-      setFilteredProducts(result);
-    };
+    // Tìm kiếm
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      result = result.filter((p) =>
+        (p.product_name ?? "").toLowerCase().includes(q)
+      );
+    }
 
-    fetchAndSetProducts();
+    // Sắp xếp
+    result.sort((a, b) => {
+      if (sortBy === "price") {
+        const av = Number(a.price ?? 0);
+        const bv = Number(b.price ?? 0);
+        return sortDirection === "asc" ? av - bv : bv - av;
+      } else if (sortBy === "createdAt") {
+        const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return sortDirection === "asc" ? ta - tb : tb - ta;
+      } else {
+        const va = String(a[sortBy] ?? "").toLowerCase();
+        const vb = String(b[sortBy] ?? "").toLowerCase();
+        return sortDirection === "asc"
+          ? va.localeCompare(vb)
+          : vb.localeCompare(va);
+      }
+    });
+
+    return result;
+  }, [products, searchTerm, sortBy, sortDirection]);
+
+  // Mỗi khi bộ lọc thay đổi thì quay về trang 1
+  useEffect(() => {
+    setPage(0);
   }, [searchTerm, sortBy, sortDirection]);
 
   const handleAddProduct = () => {
@@ -134,17 +140,31 @@ export default function ProductManagement() {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDeleteProduct = () => {
-    if (currentProduct) {
+  const confirmDeleteProduct = async () => {
+    if (!currentProduct) return;
+    try {
+      const id = currentProduct._id || currentProduct.product_id;
+      await deleteProduct(id);
       setProducts((prev) =>
-        prev.filter((p) => p.product_id !== currentProduct.product_id)
+        prev.filter(
+          (p) => (p._id ?? p.product_id) !== (currentProduct._id ?? currentProduct.product_id)
+        )
       );
       setSnackbar({
         open: true,
         message: `${currentProduct.product_name} đã được xóa`,
         severity: "success",
       });
+    } catch (err: any) {
+      console.error("Delete product error", err);
+      setSnackbar({
+        open: true,
+        message: err?.message || "Xóa sản phẩm thất bại",
+        severity: "error",
+      });
+    } finally {
       setDeleteDialogOpen(false);
+      setCurrentProduct(null);
     }
   };
 
@@ -152,7 +172,8 @@ export default function ProductManagement() {
     formData: Omit<Product, "createdAt" | "updatedAt">,
     file?: File
   ) => {
-    if (!formData.product_name || formData.price <= 0) {
+    // validate tối thiểu
+    if (!formData.product_name || Number(formData.price) <= 0) {
       setSnackbar({
         open: true,
         message: "Vui lòng điền đầy đủ thông tin bắt buộc",
@@ -161,73 +182,63 @@ export default function ProductManagement() {
       return;
     }
 
-    if (currentProduct) {
-      try {
-        const updatedProduct = await updateProduct(
-          currentProduct._id,
-          formData,
-          file
+    try {
+      if (currentProduct) {
+        // --- UPDATE ---
+        const id = currentProduct._id || currentProduct.product_id;
+        const updated = await updateProduct(id, formData, file);
+
+        setProducts(prev =>
+          prev.map(p =>
+            (p._id ?? p.product_id) === (updated._id ?? updated.product_id) ? updated : p
+          )
         );
 
-        setProducts((prev) =>
-          prev.map((p) =>
-            p.product_id === updatedProduct.product_id ? updatedProduct : p
-          )
-        );
-        setFilteredProducts((prev) =>
-          prev.map((p) =>
-            p.product_id === updatedProduct.product_id ? updatedProduct : p
-          )
-        );
         setSnackbar({
           open: true,
-          message: `${updatedProduct.product_name} đã được cập nhật`,
+          message: `${updated.product_name} đã được cập nhật`,
           severity: "success",
         });
-      } catch (error) {
-        setSnackbar({
-          open: true,
-          message: "Cập nhật sản phẩm thất bại.",
-          severity: "error",
-        });
-      }
-    } else {
-      try {
-        const productToAdd = {
-          product_id: Date.now().toString(),
+      } else {
+        // --- ADD ---
+        // KHÔNG tự tạo product_id/img_url ở client. Gửi đúng dữ liệu người dùng nhập,
+        // file (nếu có) sẽ gửi ở field "image" / "img_url" theo service.
+        const toCreate: Product = {
           product_name: formData.product_name,
-          img_url: "", // backend sẽ tự set
-          price: formData.price,
-          stock: (formData as any).stock ?? 0,
-          weight: formData.weight ?? null,
-          max_quantity: formData.max_quantity ?? null,
-          discount: formData.discount ?? null,
-        };
+          price: Number(formData.price) || 0,
+          stock: Number((formData as any).stock) || 0,
+          weight: Number((formData as any).weight) || 0,
+          max_quantity: Number((formData as any).max_quantity) || 0,
+          discount: Number((formData as any).discount) || 0,
+          // ĐỂ TRỐNG các field server sẽ sinh: _id / product_id / img_url...
+        } as unknown as Product;
 
-        const addedProduct = await addProduct(productToAdd, file);
+        // Tạo
+        const created = await addProduct(toCreate, file);
 
-        setProducts((prev) => [...prev, addedProduct]);
-        setFilteredProducts((prev) => [...prev, addedProduct]);
+        // LẤY LẠI BẢN CHUẨN HÓA CÓ PREFIX ẢNH (service getProductById đã xử lý IMG_PREFIX)
+        const createdId = created?._id || created?.product_id;
+        const normalized = createdId ? await getProductById(String(createdId)) : created;
+
+        setProducts(prev => [...prev, (normalized ?? created)]);
+
         setSnackbar({
           open: true,
-          message: `${addedProduct.product_name} đã được thêm`,
+          message: `${(normalized ?? created)?.product_name || "Sản phẩm"} đã được thêm`,
           severity: "success",
         });
-      } catch (error) {
-        setSnackbar({
-          open: true,
-          message: "Thêm sản phẩm thất bại.",
-          severity: "error",
-        });
       }
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: currentProduct ? "Cập nhật sản phẩm thất bại." : "Thêm sản phẩm thất bại.",
+        severity: "error",
+      });
+    } finally {
+      setDialogOpen(false);
     }
-
-    setDialogOpen(false);
   };
 
-  const handleImageUpload = () => {
-    fileInputRef.current?.click();
-  };
 
   const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
@@ -242,7 +253,7 @@ export default function ProductManagement() {
 
   const handleSortChange = (column: "product_name" | "price" | "createdAt") => {
     if (sortBy === column) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+      setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
     } else {
       setSortBy(column);
       setSortDirection("asc");
@@ -300,10 +311,7 @@ export default function ProductManagement() {
                   ),
                   endAdornment: searchTerm && (
                     <InputAdornment position="end">
-                      <IconButton
-                        size="small"
-                        onClick={() => setSearchTerm("")}
-                      >
+                      <IconButton size="small" onClick={() => setSearchTerm("")}>
                         <ClearIcon fontSize="small" />
                       </IconButton>
                     </InputAdornment>
@@ -320,9 +328,9 @@ export default function ProductManagement() {
                     const [newSortBy, newSortDirection] = e.target.value.split(
                       "-"
                     ) as [
-                      "product_name" | "price" | "createdAt",
-                      "asc" | "desc"
-                    ];
+                        "product_name" | "price" | "createdAt",
+                        "asc" | "desc"
+                      ];
                     setSortBy(newSortBy);
                     setSortDirection(newSortDirection);
                   }}
@@ -351,7 +359,11 @@ export default function ProductManagement() {
             <Grid size={1}>
               <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
                 <Tooltip
-                  title={viewMode === "grid" ? "Chuyển sang danh sách" : "Chuyển sang lưới"}
+                  title={
+                    viewMode === "grid"
+                      ? "Chuyển sang danh sách"
+                      : "Chuyển sang lưới"
+                  }
                 >
                   <IconButton
                     onClick={() =>
@@ -385,7 +397,7 @@ export default function ProductManagement() {
             {filteredProducts
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((product) => (
-                <Grid size={12} key={product._id}>
+                <Grid size={12} key={product._id ?? product.product_id}>
                   <ProductItem
                     product={product}
                     onEdit={handleEditProduct}
@@ -459,7 +471,7 @@ export default function ProductManagement() {
                 {filteredProducts
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((product) => (
-                    <TableRow key={product.product_id}>
+                    <TableRow key={product._id ?? product.product_id}>
                       <TableCell>
                         <Box
                           component="img"
@@ -480,8 +492,10 @@ export default function ProductManagement() {
                       </TableCell>
                       <TableCell>{(product as any).stock ?? "-"}</TableCell>
                       <TableCell>{(product as any).weight ?? "-"}</TableCell>
-                      <TableCell>{(product as any).max_quantity ?? "-"}</TableCell>
-                      <TableCell>{(product as any).discount ?? (product as any).discount ?? "-"}</TableCell>
+                      <TableCell>
+                        {(product as any).max_quantity ?? "-"}
+                      </TableCell>
+                      <TableCell>{(product as any).discount ?? "-"}</TableCell>
                       <TableCell>
                         <Box sx={{ display: "flex", gap: 1 }}>
                           <IconButton
@@ -555,18 +569,11 @@ export default function ProductManagement() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={confirmDeleteProduct}
-          >
+          <Button variant="contained" color="error" onClick={confirmDeleteProduct}>
             Delete
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Hidden file input for image upload */}
-      <input type="file" style={{ display: "none" }} />
 
       {/* Snackbar for notifications */}
       <Snackbar

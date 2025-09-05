@@ -22,7 +22,7 @@ function buildFileUrl(file) {
     return file.filename || file.path;
   }
   // prefer /uploads/<filename>
-  return host ? `${host}/uploads/${file.filename}` : `/uploads/${file.filename}`;
+  return host ? `/uploads/${file.filename}` : `/uploads/${file.filename}`;
 }
 
 module.exports = {
