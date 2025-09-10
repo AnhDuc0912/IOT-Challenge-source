@@ -79,7 +79,14 @@ exports.createOrderWithDetails = async (req, res) => {
             });
 
             // multer.single('receipt_image') => req.file
-            const file = req.file;
+            // trước khi lưu ảnh:
+            let file = req.file;
+            if (!file && req.files) {
+                file =
+                    (req.files.receipt_image && req.files.receipt_image[0]) ||
+                    (req.files.customer_image && req.files.customer_image[0]) ||
+                    (req.files.file && req.files.file[0]);
+            }
 
             if (file) {
                 const originalName = file.originalname || file.name || "";

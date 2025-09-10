@@ -1,4 +1,3 @@
-// src/routes/oder.js
 const express = require('express');
 const router = express.Router();
 const oderController = require('../controller/order.controller');
@@ -10,7 +9,16 @@ const upload = multer({
 });
 
 // Order
-router.post('/', upload.single('customer_image'), oderController.createOrderWithDetails);
+router.post(
+  '/',
+  upload.fields([
+    { name: 'receipt_image', maxCount: 1 },
+    { name: 'customer_image', maxCount: 1 },
+    { name: 'file',          maxCount: 1 },
+  ]),
+  oderController.createOrderWithDetails
+);
+
 router.get('/', oderController.getOrders);
 router.get('/:id', oderController.getOrderDetail);
 
