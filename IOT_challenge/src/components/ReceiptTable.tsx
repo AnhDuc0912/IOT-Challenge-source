@@ -81,7 +81,6 @@ const ReceiptTable: React.FC<ReceiptTableProps> = ({
                 <TableCell>${receipt.total.toFixed(2)}</TableCell>
                 <TableCell>
                   <Chip
-                    icon={getStatusIcon(receipt.status)}
                     label={receipt.status}
                     color={getStatusColor(receipt.status) as any}
                     size="small"
@@ -90,15 +89,6 @@ const ReceiptTable: React.FC<ReceiptTableProps> = ({
                 <TableCell>{receipt.paymentMethod}</TableCell>
                 <TableCell>
                   <Box sx={{ display: "flex", gap: 1 }}>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEdit(receipt);
-                      }}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
                     <IconButton
                       size="small"
                       color="error"

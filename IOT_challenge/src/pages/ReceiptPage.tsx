@@ -86,7 +86,31 @@ export default function ReceiptPage() {
         setLoading(true);
         setError(null);
         const resp = await fetchAllReceipts(controller.signal);
-        const list = resp?.success && Array.isArray(resp.data) ? resp.data : [];
+        const listRaw = resp?.success && Array.isArray(resp.data) ? resp.data : [];
+
+        // Normalize API items into FetchAllOrderItem[] expected by the page
+        const list: FetchAllOrderItem[] = listRaw.map((it: any) => {
+          // already in {_doc, details} shape
+          if (it._doc && Array.isArray(it.details)) return it as FetchAllOrderItem;
+
+          // API returned { order, details } shape
+          if (it.order) {
+            return {
+              _doc: it.order as OrderDoc,
+              details: Array.isArray(it.details) ? it.details : [],
+              // keep any extra metadata
+              ...it,
+            } as FetchAllOrderItem;
+          }
+
+          // fallback: try to coerce
+          const doc = it.order ?? it._doc ?? it;
+          return {
+            _doc: doc as OrderDoc,
+            details: Array.isArray(it.details) ? it.details : [],
+          } as FetchAllOrderItem;
+        });
+
         setRows(list);
         setFiltered(list);
       } catch (e: any) {
@@ -282,18 +306,6 @@ export default function ReceiptPage() {
                           <RemoveRedEye fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Sửa (demo)">
-                        <span>
-                          <IconButton disabled>
-                            <Edit fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                      <Tooltip title="Xoá (client)">
-                        <IconButton color="error" onClick={() => openDelete(it)}>
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 );
@@ -327,6 +339,23 @@ export default function ReceiptPage() {
                 <Grid size={6}>
                   <Paper variant="outlined" sx={{ p: 2 }}>
                     <Typography variant="subtitle2" gutterBottom>Thông tin Order</Typography>
+                    {/* Customer image (if provided) */}
+                    {current._doc?.customer_image && (
+                      <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+                        <Box
+                          component="img"
+                          src={current._doc.customer_image}
+                          alt="Customer"
+                          sx={{
+                            width: "100%",
+                            maxWidth: 260,
+                            maxHeight: 200,
+                            objectFit: "contain",
+                            borderRadius: 1,
+                          }}
+                        />
+                      </Box>
+                    )}
                     <Stack spacing={1}>
                       <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                         <Typography variant="caption" color="text.secondary">Mã HĐ</Typography>
@@ -384,9 +413,7 @@ export default function ReceiptPage() {
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>ID detail</TableCell>
                       <TableCell>Sản phẩm</TableCell>
-                      <TableCell>Product ID</TableCell>
                       <TableCell align="right">Giá</TableCell>
                       <TableCell align="right">Số lượng</TableCell>
                       <TableCell align="right">Thành tiền</TableCell>
@@ -403,9 +430,7 @@ export default function ReceiptPage() {
                       const line = Number(d.total_price ?? price * qty);
                       return (
                         <TableRow key={d._id}>
-                          <TableCell>{d._id}</TableCell>
                           <TableCell>{prodName}</TableCell>
-                          <TableCell>{prodId}</TableCell>
                           <TableCell align="right">{currency(price)} đ</TableCell>
                           <TableCell align="right">{qty}</TableCell>
                           <TableCell align="right">{currency(line)} đ</TableCell>
@@ -416,23 +441,6 @@ export default function ReceiptPage() {
                   </TableBody>
                 </Table>
               </TableContainer>
-
-              {/* Optional: hiển thị các trường khác của order nếu cần */}
-              <Paper variant="outlined" sx={{ p: 2 }}>
-                <Typography variant="subtitle2" gutterBottom>Trường bổ sung (nếu có)</Typography>
-                <Stack spacing={1}>
-                  {Object.entries(current._doc || {}).map(([k, v]) => {
-                    // đã hiển thị các trường chính ở trên, bỏ qua để khỏi lặp
-                    if (["order_code","_id","shelf_id","total_bill","total","status","createdAt","updatedAt","__v"].includes(k)) return null;
-                    return (
-                      <Box key={k} sx={{ display: "flex", justifyContent: "space-between" }}>
-                        <Typography variant="caption" color="text.secondary">{k}</Typography>
-                        <Typography variant="body2" sx={{ wordBreak: "break-word" }}>{typeof v === "object" ? JSON.stringify(v) : String(v)}</Typography>
-                      </Box>
-                    );
-                  })}
-                </Stack>
-              </Paper>
             </Box>
           )}
         </DialogContent>

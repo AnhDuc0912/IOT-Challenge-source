@@ -100,7 +100,7 @@ exports.createOrderWithDetails = async (req, res) => {
                     fs.writeFileSync(destPath, file.buffer);
                 }
 
-                const publicPath = `/public/uploads/customers/${destName}`;
+                const publicPath = `/uploads/customers/${destName}`;
                 await Oder.findByIdAndUpdate(order._id, {
                     $set: {
                         customer_image: publicPath

@@ -22,7 +22,6 @@ export const fetchProducts = async (): Promise<Product[]> => {
 
 export const fetchShelves = async (): Promise<Shelf[]> => {
   const response = await axios.get(`${API_URL}/shelves`);
-  console.log(response);
   
   return response.data;
 };
