@@ -73,7 +73,7 @@ exports.createOrderWithDetails = async (req, res) => {
 
         // 6) Save ảnh (nếu có). Không ràng buộc transaction.
         try {
-            const uploadDir = path.join(__dirname, "..", "..", "uploads", "customers");
+            const uploadDir = path.join(__dirname, "..", "..", "public", "uploads", "customers");
             fs.mkdirSync(uploadDir, {
                 recursive: true
             });
@@ -100,7 +100,7 @@ exports.createOrderWithDetails = async (req, res) => {
                     fs.writeFileSync(destPath, file.buffer);
                 }
 
-                const publicPath = `/uploads/customers/${destName}`;
+                const publicPath = `/public/uploads/customers/${destName}`;
                 await Oder.findByIdAndUpdate(order._id, {
                     $set: {
                         customer_image: publicPath
