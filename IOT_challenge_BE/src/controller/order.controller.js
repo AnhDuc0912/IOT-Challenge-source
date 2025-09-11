@@ -53,8 +53,10 @@ exports.createOrderWithDetails = async (req, res) => {
         });
 
         // 4) Tạo OrderDetails (ép kiểu số cho quantity/price/total_price)
-        const details = await Promise.all(
-            (orderDetails || []).map((d) => {
+        console.log("DEBUG orderDetails:", JSON.stringify(orderDetails));
+        const details = [];
+        for (const d of (orderDetails || [])) {
+            try {
                 const payload = {
                     ...d,
                     order_id: order._id,
@@ -62,11 +64,19 @@ exports.createOrderWithDetails = async (req, res) => {
                     price: d.price != null ? Number(d.price) : undefined,
                     total_price: d.total_price != null ? Number(d.total_price) : undefined,
                 };
-                return new OderDetail(payload).save({
-                    session
-                });
-            })
-        );
+                // try save with session; if error, try without session and log
+                let saved;
+                try {
+                    saved = await new OderDetail(payload).save({ session });
+                } catch (e) {
+                    console.error("Save with session failed, retrying without session:", e.message);
+                    saved = await new OderDetail(payload).save();
+                }
+                details.push(saved);
+            } catch (e) {
+                console.error("Failed to create order detail for payload:", d, e);
+            }
+        }
 
         // 5) Commit trước khi xử lý file (tránh lỗi file làm hỏng transaction)
         await session.commitTransaction();
