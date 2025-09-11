@@ -26,6 +26,9 @@ const conditionalMulter = (req, res, next) => {
 router.post('/', conditionalMulter, oderController.createOrderWithDetails);
 
 router.get('/', oderController.getOrders);
+router.get('/statistics/revenue', oderController.getRevenueStatistics);
+router.get('/statistics/products', oderController.getProductSalesStatistics);
+router.get('/statistics/top-products', oderController.getTopSellingProducts);
 router.get('/:id', oderController.getOrderDetail);
 
 module.exports = router;

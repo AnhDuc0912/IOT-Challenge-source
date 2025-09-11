@@ -198,7 +198,7 @@ export default function ReceiptPage() {
         <Grid container spacing={2} sx={{ width: { xs: "100%", sm: "auto" } }}>
           <Grid size={4}>
             <Paper elevation={3} sx={{ display: "flex", alignItems: "center", gap: 2, p: 1.5, minWidth: 150 }}>
-              <DangerousIcon  sx={{ color: "error.main", fontSize: 30 }} />
+              <DangerousIcon sx={{ color: "error.main", fontSize: 30 }} />
               <Box>
                 <Typography variant="caption" color="text.secondary">Không thanh toán</Typography>
                 <Typography variant="h6" sx={{ mt: 0.3 }}>{unPaidCount}</Typography>
@@ -339,23 +339,7 @@ export default function ReceiptPage() {
                 <Grid size={6}>
                   <Paper variant="outlined" sx={{ p: 2 }}>
                     <Typography variant="subtitle2" gutterBottom>Thông tin Order</Typography>
-                    {/* Customer image (if provided) */}
-                    {current._doc?.customer_image && (
-                      <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
-                        <Box
-                          component="img"
-                          src={current._doc.customer_image}
-                          alt="Customer"
-                          sx={{
-                            width: "100%",
-                            maxWidth: 260,
-                            maxHeight: 200,
-                            objectFit: "contain",
-                            borderRadius: 1,
-                          }}
-                        />
-                      </Box>
-                    )}
+
                     <Stack spacing={1}>
                       <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                         <Typography variant="caption" color="text.secondary">Mã HĐ</Typography>
@@ -397,6 +381,26 @@ export default function ReceiptPage() {
                       <Chip label={`Mặt hàng: ${(current.details ?? []).length}`} size="small" />
                       <Chip label={getStatusName(current._doc?.status)} color={getStatusColor(current._doc?.status) as any} size="small" />
                     </Stack>
+
+                    {/* Customer image (if provided) */}
+                    <Box py={3}>
+                      {current._doc?.customer_image && (
+                        <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+                          <Box
+                            component="img"
+                            src={current._doc.customer_image}
+                            alt="Customer"
+                            sx={{
+                              width: "100%",
+                              maxWidth: 260,
+                              maxHeight: 200,
+                              objectFit: "contain",
+                              borderRadius: 1,
+                            }}
+                          />
+                        </Box>
+                      )}
+                    </Box>
 
                     {/* nếu cần: hiển thị thêm meta fields */}
                     <Box sx={{ mt: 2 }}>

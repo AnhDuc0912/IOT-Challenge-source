@@ -67,6 +67,34 @@ import { Gender, Role, User } from "../types/userTypes";
 const roles: Role[] = ["admin", "manager", "employee"];
 const genders: Gender[] = ["male", "female", "other"];
 
+// Helper function to translate gender
+const getGenderLabel = (gender: Gender) => {
+  switch (gender) {
+    case "male":
+      return "Nam";
+    case "female":
+      return "Nữ";
+    case "other":
+      return "Khác";
+    default:
+      return "Khác";
+  }
+};
+
+// Helper function to translate role
+const getRoleLabel = (role: Role) => {
+  switch (role) {
+    case "admin":
+      return "Quản trị viên";
+    case "manager":
+      return "Quản lý";
+    case "employee":
+      return "Nhân viên";
+    default:
+      return "Nhân viên";
+  }
+};
+
 export default function UserManagement() {
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
@@ -351,7 +379,7 @@ export default function UserManagement() {
           startIcon={<AddIcon />}
           onClick={handleAddUser}
         >
-          Add User
+          Thêm người dùng
         </Button>
       </Box>
 
@@ -365,7 +393,7 @@ export default function UserManagement() {
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                   <Box>
                     <Typography color="textSecondary" gutterBottom variant="overline">
-                      Total Users
+                      Tổng người dùng
                     </Typography>
                     <Typography variant="h4">{users.length}</Typography>
                   </Box>
@@ -382,7 +410,7 @@ export default function UserManagement() {
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                   <Box>
                     <Typography color="textSecondary" gutterBottom variant="overline">
-                      Active Users
+                      Người dùng hoạt động
                     </Typography>
                     <Typography variant="h4" color="success.main">
                       {users.filter((u) => u.isActive).length}
@@ -401,7 +429,7 @@ export default function UserManagement() {
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                   <Box>
                     <Typography color="textSecondary" gutterBottom variant="overline">
-                      Admins
+                      Quản trị viên
                     </Typography>
                     <Typography variant="h4" color="warning.main">
                       {users.filter((u) => u.role === "admin").length}
@@ -420,7 +448,7 @@ export default function UserManagement() {
                 <Box display="flex" alignItems="center" justifyContent="space-between">
                   <Box>
                     <Typography color="textSecondary" gutterBottom variant="overline">
-                      Verified Emails
+                      Email đã xác thực
                     </Typography>
                     <Typography variant="h4" color="info.main">
                       {users.filter((u) => u.emailVerified).length}
@@ -441,7 +469,7 @@ export default function UserManagement() {
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
-                placeholder="Search by name, username, email, phone, RFID..."
+                placeholder="Tìm kiếm theo tên, tên đăng nhập, email, điện thoại, RFID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
@@ -462,17 +490,17 @@ export default function UserManagement() {
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
               <FormControl fullWidth>
-                <InputLabel>Role</InputLabel>
+                <InputLabel>Vai trò</InputLabel>
                 <Select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value as Role | "")}
-                  label="Role"
+                  label="Vai trò"
                   displayEmpty
                 >
-                  <MenuItem value="">All Roles</MenuItem>
+                  <MenuItem value="">Tất cả vai trò</MenuItem>
                   {roles.map((role) => (
                     <MenuItem key={role} value={role}>
-                      {role}
+                      {getRoleLabel(role)}
                     </MenuItem>
                   ))}
                 </Select>
@@ -480,18 +508,18 @@ export default function UserManagement() {
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
               <FormControl fullWidth>
-                <InputLabel>Active</InputLabel>
+                <InputLabel>Trạng thái</InputLabel>
                 <Select
                   value={activeFilter}
                   onChange={(e) =>
                     setActiveFilter(e.target.value as "" | "active" | "inactive")
                   }
-                  label="Active"
+                  label="Trạng thái"
                   displayEmpty
                 >
-                  <MenuItem value="">All</MenuItem>
-                  <MenuItem value="active">Active</MenuItem>
-                  <MenuItem value="inactive">Inactive</MenuItem>
+                  <MenuItem value="">Tất cả</MenuItem>
+                  <MenuItem value="active">Hoạt động</MenuItem>
+                  <MenuItem value="inactive">Không hoạt động</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -503,12 +531,12 @@ export default function UserManagement() {
                 onClick={clearFilters}
                 disabled={!searchTerm && !roleFilter && !activeFilter}
               >
-                Clear
+                Xóa bộ lọc
               </Button>
             </Grid>
             <Grid size={{ xs: 12, md: 0.5 as any }}>
               <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-                <Tooltip title={viewMode === "grid" ? "List View" : "Grid View"}>
+                <Tooltip title={viewMode === "grid" ? "Xem dạng danh sách" : "Xem dạng lưới"}>
                   <IconButton
                     onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
                   >
@@ -524,10 +552,10 @@ export default function UserManagement() {
         {filteredUsers.length === 0 ? (
           <Paper sx={{ p: 4, textAlign: "center" }}>
             <Typography variant="h6" color="text.secondary">
-              No users found
+              Không tìm thấy người dùng
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Try adjusting your search or filters
+              Thử điều chỉnh tìm kiếm hoặc bộ lọc của bạn
             </Typography>
           </Paper>
         ) : viewMode === "grid" ? (
@@ -571,7 +599,7 @@ export default function UserManagement() {
 
                       <Box display="flex" alignItems="center" justifyContent="center" mb={1}>
                         {getRoleIcon(user.role)}
-                        <Chip label={user.role} size="small" sx={{ ml: 1 }} />
+                        <Chip label={getRoleLabel(user.role)} size="small" sx={{ ml: 1 }} />
                       </Box>
 
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
@@ -591,11 +619,11 @@ export default function UserManagement() {
                       )}
 
                       <Typography variant="caption" color="text.secondary" display="block">
-                        Created: {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}
+                        Tạo: {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}
                       </Typography>
                       {user.lastLogin && (
                         <Typography variant="caption" color="text.secondary" display="block">
-                          Last login: {new Date(user.lastLogin).toLocaleDateString()}
+                          Đăng nhập cuối: {new Date(user.lastLogin).toLocaleDateString()}
                         </Typography>
                       )}
                     </CardContent>
@@ -610,7 +638,7 @@ export default function UserManagement() {
                             size="small"
                           />
                         }
-                        label={user.isActive ? "Active" : "Inactive"}
+                        label={user.isActive ? "Hoạt động" : "Không hoạt động"}
                         sx={{ m: 0 }}
                       />
                       <Box>
@@ -631,14 +659,14 @@ export default function UserManagement() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>User</TableCell>
-                  <TableCell>Role</TableCell>
+                  <TableCell>Người dùng</TableCell>
+                  <TableCell>Vai trò</TableCell>
                   <TableCell>RFID</TableCell>
-                  <TableCell>Active</TableCell>
-                  <TableCell>Email Verified</TableCell>
-                  <TableCell>Created</TableCell>
-                  <TableCell>Last Login</TableCell>
-                  <TableCell>Actions</TableCell>
+                  <TableCell>Hoạt động</TableCell>
+                  <TableCell>Email đã xác thực</TableCell>
+                  <TableCell>Tạo</TableCell>
+                  <TableCell>Đăng nhập cuối</TableCell>
+                  <TableCell>Hành động</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -664,20 +692,20 @@ export default function UserManagement() {
                       <TableCell>
                         <Box display="flex" alignItems="center">
                           {getRoleIcon(user.role)}
-                          <Typography sx={{ ml: 1 }}>{user.role}</Typography>
+                          <Typography sx={{ ml: 1 }}>{getRoleLabel(user.role)}</Typography>
                         </Box>
                       </TableCell>
                       <TableCell>{user.rfid || "-"}</TableCell>
                       <TableCell>
                         <Chip
-                          label={user.isActive ? "Active" : "Inactive"}
+                          label={user.isActive ? "Hoạt động" : "Không hoạt động"}
                           color={user.isActive ? "success" : "default"}
                           size="small"
                         />
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={user.emailVerified ? "Verified" : "Not verified"}
+                          label={user.emailVerified ? "Đã xác thực" : "Chưa xác thực"}
                           color={user.emailVerified ? "success" : "default"}
                           size="small"
                         />
@@ -686,7 +714,7 @@ export default function UserManagement() {
                         {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "-"}
                       </TableCell>
                       <TableCell>
-                        {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : "Never"}
+                        {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : "Chưa bao giờ"}
                       </TableCell>
                       <TableCell>
                         <Box sx={{ display: "flex", gap: 1 }}>
@@ -732,7 +760,7 @@ export default function UserManagement() {
 
       {/* Add/Edit User Dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>{currentUser ? "Edit User" : "Add New User"}</DialogTitle>
+        <DialogTitle>{currentUser ? "Chỉnh sửa người dùng" : "Thêm người dùng mới"}</DialogTitle>
         <DialogContent dividers>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 4 }}>
@@ -753,7 +781,7 @@ export default function UserManagement() {
                   {initials(formData.fullName, formData.username)}
                 </Avatar>
                 <Button variant="outlined" startIcon={<PersonIcon />} onClick={handleAvatarUpload}>
-                  Upload Avatar
+                  Tải lên ảnh đại diện
                 </Button>
                 <input
                   type="file"
@@ -765,7 +793,7 @@ export default function UserManagement() {
                 {currentUser && (
                   <Chip
                     sx={{ mt: 2 }}
-                    label={formData.emailVerified ? "Email Verified" : "Email Not Verified"}
+                    label={formData.emailVerified ? "Email đã xác thực" : "Email chưa xác thực"}
                     color={formData.emailVerified ? "success" : "default"}
                     size="small"
                   />
@@ -778,7 +806,7 @@ export default function UserManagement() {
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
-                    label="Username"
+                    label="Tên đăng nhập"
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                     required
@@ -808,7 +836,7 @@ export default function UserManagement() {
                 <Grid size={{ xs: 12 }}>
                   <TextField
                     fullWidth
-                    label="Password"
+                    label="Mật khẩu"
                     type="password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -820,7 +848,7 @@ export default function UserManagement() {
                 <Grid size={{ xs: 12 }}>
                   <TextField
                     fullWidth
-                    label="Full Name"
+                    label="Họ và tên"
                     value={formData.fullName}
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   />
@@ -829,7 +857,7 @@ export default function UserManagement() {
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
-                    label="Phone"
+                    label="Số điện thoại"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   />
@@ -838,7 +866,7 @@ export default function UserManagement() {
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
-                    label="Address"
+                    label="Địa chỉ"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   />
@@ -847,7 +875,7 @@ export default function UserManagement() {
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
-                    label="Date of Birth"
+                    label="Ngày sinh"
                     type="date"
                     InputLabelProps={{ shrink: true }}
                     value={formData.dateOfBirth}
@@ -857,10 +885,10 @@ export default function UserManagement() {
 
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <FormControl fullWidth>
-                    <InputLabel>Gender</InputLabel>
+                    <InputLabel>Giới tính</InputLabel>
                     <Select
                       value={formData.gender}
-                      label="Gender"
+                      label="Giới tính"
                       onChange={(e) =>
                         setFormData({ ...formData, gender: e.target.value as Gender })
                       }
@@ -876,10 +904,10 @@ export default function UserManagement() {
 
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <FormControl fullWidth required>
-                    <InputLabel>Role</InputLabel>
+                    <InputLabel>Vai trò</InputLabel>
                     <Select
                       value={formData.role}
-                      label="Role"
+                      label="Vai trò"
                       onChange={(e) => setFormData({ ...formData, role: e.target.value as Role })}
                     >
                       {roles.map((r) => (
@@ -901,7 +929,7 @@ export default function UserManagement() {
                         }
                       />
                     }
-                    label={formData.isActive ? "Active" : "Inactive"}
+                    label={formData.isActive ? "Hoạt động" : "Không hoạt động"}
                   />
                 </Grid>
               </Grid>
@@ -910,27 +938,27 @@ export default function UserManagement() {
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setDialogOpen(false)}>Hủy</Button>
           <Button variant="contained" onClick={handleSaveUser} startIcon={<SaveIcon />}>
-            {currentUser ? "Update User" : "Add User"}
+            {currentUser ? "Cập nhật người dùng" : "Thêm người dùng"}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogTitle>Xác nhận xóa</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete{" "}
-            <strong>{currentUser?.fullName || currentUser?.username}</strong>? This action
-            cannot be undone.
+            Bạn có chắc chắn muốn xóa{" "}
+            <strong>{currentUser?.fullName || currentUser?.username}</strong>? Hành động này
+            không thể hoàn tác.
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Hủy</Button>
           <Button variant="contained" color="error" onClick={confirmDeleteUser}>
-            Delete
+            Xóa
           </Button>
         </DialogActions>
       </Dialog>

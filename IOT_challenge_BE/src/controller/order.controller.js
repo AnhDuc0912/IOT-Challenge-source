@@ -260,3 +260,307 @@ exports.getOrderDetail = async (req, res) => {
         });
     }
 };
+
+// Thống kê doanh thu theo thời gian
+exports.getRevenueStatistics = async (req, res) => {
+    try {
+        const { period = 'monthly', year, month, startDate, endDate } = req.query;
+        
+        let matchStage = {
+            status: 'paid' // Chỉ tính đơn hàng đã thanh toán
+        };
+
+        // Xây dựng điều kiện lọc theo thời gian
+        if (startDate && endDate) {
+            matchStage.createdAt = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
+        } else if (year) {
+            const yearInt = parseInt(year);
+            if (month) {
+                const monthInt = parseInt(month);
+                matchStage.createdAt = {
+                    $gte: new Date(yearInt, monthInt - 1, 1),
+                    $lt: new Date(yearInt, monthInt, 1)
+                };
+            } else {
+                matchStage.createdAt = {
+                    $gte: new Date(yearInt, 0, 1),
+                    $lt: new Date(yearInt + 1, 0, 1)
+                };
+            }
+        }
+
+        let groupStage;
+        if (period === 'daily') {
+            groupStage = {
+                _id: {
+                    year: { $year: "$createdAt" },
+                    month: { $month: "$createdAt" },
+                    day: { $dayOfMonth: "$createdAt" }
+                },
+                totalRevenue: { $sum: "$total_bill" },
+                orderCount: { $sum: 1 },
+                date: { $first: "$createdAt" }
+            };
+        } else if (period === 'monthly') {
+            groupStage = {
+                _id: {
+                    year: { $year: "$createdAt" },
+                    month: { $month: "$createdAt" }
+                },
+                totalRevenue: { $sum: "$total_bill" },
+                orderCount: { $sum: 1 },
+                date: { $first: "$createdAt" }
+            };
+        } else if (period === 'yearly') {
+            groupStage = {
+                _id: {
+                    year: { $year: "$createdAt" }
+                },
+                totalRevenue: { $sum: "$total_bill" },
+                orderCount: { $sum: 1 },
+                date: { $first: "$createdAt" }
+            };
+        }
+
+        const statistics = await Oder.aggregate([
+            { $match: matchStage },
+            { $group: groupStage },
+            { $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 } }
+        ]);
+
+        // Format kết quả
+        const formattedStats = statistics.map(stat => ({
+            period: stat._id,
+            totalRevenue: stat.totalRevenue,
+            orderCount: stat.orderCount,
+            averageOrderValue: stat.totalRevenue / stat.orderCount,
+            date: stat.date
+        }));
+
+        // Tính tổng doanh thu và số đơn hàng
+        const totalRevenue = statistics.reduce((sum, stat) => sum + stat.totalRevenue, 0);
+        const totalOrders = statistics.reduce((sum, stat) => sum + stat.orderCount, 0);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                statistics: formattedStats,
+                summary: {
+                    totalRevenue,
+                    totalOrders,
+                    averageOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0,
+                    period,
+                    dataPoints: statistics.length
+                }
+            }
+        });
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch revenue statistics',
+            message: err.message
+        });
+    }
+};
+
+// Thống kê số lượng sản phẩm bán ra
+exports.getProductSalesStatistics = async (req, res) => {
+    try {
+        const { period = 'all', year, month, startDate, endDate, limit = 10 } = req.query;
+        
+        let matchStage = {
+            'order.status': 'paid' // Chỉ tính đơn hàng đã thanh toán
+        };
+
+        // Xây dựng điều kiện lọc theo thời gian
+        if (startDate && endDate) {
+            matchStage['order.createdAt'] = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
+        } else if (year) {
+            const yearInt = parseInt(year);
+            if (month) {
+                const monthInt = parseInt(month);
+                matchStage['order.createdAt'] = {
+                    $gte: new Date(yearInt, monthInt - 1, 1),
+                    $lt: new Date(yearInt, monthInt, 1)
+                };
+            } else {
+                matchStage['order.createdAt'] = {
+                    $gte: new Date(yearInt, 0, 1),
+                    $lt: new Date(yearInt + 1, 0, 1)
+                };
+            }
+        }
+
+        const productStats = await OderDetail.aggregate([
+            // Lookup để join với Order
+            {
+                $lookup: {
+                    from: 'oders',
+                    localField: 'order_id',
+                    foreignField: '_id',
+                    as: 'order'
+                }
+            },
+            { $unwind: '$order' },
+            { $match: matchStage },
+            // Lookup để join với Product
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: 'product_id',
+                    foreignField: '_id',
+                    as: 'product'
+                }
+            },
+            { $unwind: '$product' },
+            // Group theo sản phẩm
+            {
+                $group: {
+                    _id: '$product_id',
+                    productName: { $first: '$product.product_name' },
+                    productCode: { $first: '$product.product_code' },
+                    category: { $first: '$product.category' },
+                    totalQuantitySold: { $sum: '$quantity' },
+                    totalRevenue: { $sum: '$total_price' },
+                    orderCount: { $sum: 1 },
+                    averagePrice: { $avg: '$price' },
+                    lastSaleDate: { $max: '$order.createdAt' }
+                }
+            },
+            { $sort: { totalQuantitySold: -1 } },
+            { $limit: parseInt(limit) }
+        ]);
+
+        // Thống kê tổng quan
+        const overallStats = await OderDetail.aggregate([
+            {
+                $lookup: {
+                    from: 'oders',
+                    localField: 'order_id',
+                    foreignField: '_id',
+                    as: 'order'
+                }
+            },
+            { $unwind: '$order' },
+            { $match: matchStage },
+            {
+                $group: {
+                    _id: null,
+                    totalProductsSold: { $sum: '$quantity' },
+                    totalRevenue: { $sum: '$total_price' },
+                    uniqueProducts: { $addToSet: '$product_id' },
+                    totalOrders: { $addToSet: '$order_id' }
+                }
+            }
+        ]);
+
+        const summary = overallStats[0] || {
+            totalProductsSold: 0,
+            totalRevenue: 0,
+            uniqueProducts: [],
+            totalOrders: []
+        };
+
+        res.status(200).json({
+            success: true,
+            data: {
+                productStatistics: productStats,
+                summary: {
+                    totalProductsSold: summary.totalProductsSold,
+                    totalRevenue: summary.totalRevenue,
+                    uniqueProductCount: summary.uniqueProducts.length,
+                    uniqueOrderCount: summary.totalOrders.length,
+                    averageQuantityPerOrder: summary.uniqueOrderCount > 0 
+                        ? summary.totalProductsSold / summary.uniqueOrderCount : 0
+                },
+                period,
+                limit: parseInt(limit)
+            }
+        });
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch product sales statistics',
+            message: err.message
+        });
+    }
+};
+
+// Thống kê top sản phẩm bán chạy
+exports.getTopSellingProducts = async (req, res) => {
+    try {
+        const { limit = 5, period = 'all', year, month } = req.query;
+        
+        let matchStage = {
+            'order.status': 'paid'
+        };
+
+        // Xây dựng điều kiện lọc theo thời gian
+        if (year) {
+            const yearInt = parseInt(year);
+            if (month) {
+                const monthInt = parseInt(month);
+                matchStage['order.createdAt'] = {
+                    $gte: new Date(yearInt, monthInt - 1, 1),
+                    $lt: new Date(yearInt, monthInt, 1)
+                };
+            } else {
+                matchStage['order.createdAt'] = {
+                    $gte: new Date(yearInt, 0, 1),
+                    $lt: new Date(yearInt + 1, 0, 1)
+                };
+            }
+        }
+
+        const topProducts = await OderDetail.aggregate([
+            {
+                $lookup: {
+                    from: 'oders',
+                    localField: 'order_id',
+                    foreignField: '_id',
+                    as: 'order'
+                }
+            },
+            { $unwind: '$order' },
+            { $match: matchStage },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: 'product_id',
+                    foreignField: '_id',
+                    as: 'product'
+                }
+            },
+            { $unwind: '$product' },
+            {
+                $group: {
+                    _id: '$product_id',
+                    productName: { $first: '$product.product_name' },
+                    productCode: { $first: '$product.product_code' },
+                    totalQuantitySold: { $sum: '$quantity' },
+                    totalRevenue: { $sum: '$total_price' },
+                    orderCount: { $sum: 1 }
+                }
+            },
+            { $sort: { totalQuantitySold: -1 } },
+            { $limit: parseInt(limit) }
+        ]);
+
+        res.status(200).json({
+            success: true,
+            data: topProducts
+        });
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch top selling products',
+            message: err.message
+        });
+    }
+};

@@ -454,16 +454,24 @@ export default function ShelfInterface() {
     try {
       const prodName = product?.product_name ?? "Sản phẩm";
       const shelfId = activeShelf?.shelf_id ?? undefined;
-      const msg =
-        quantity === 0
-          ? `Hết hàng: ${prodName} (ngăn ${loadCells.find(item => item._id === loadCellId)?.floor} - ${loadCells.find(item => item._id === loadCellId)?.column}) ở ${shelves.find(shelf => shelf._id === loadCells.find(item => item._id === loadCellId)?.shelf_id)?.shelf_name}`
-          : `Cảnh báo: ${prodName} sắp hết (ngăn ${loadCells.find(item => item._id === loadCellId)?.floor} - ${loadCells.find(item => item._id === loadCellId)?.column})} ở ${shelves.find(shelf => shelf._id === loadCells.find(item => item._id === loadCellId)?.shelf_id)?.shelf_name}`;
+      let msg = "";
 
-      console.log(msg);
+      if (quantity === 0) {
+        msg = `Hết hàng: ${prodName} (ngăn ${loadCells.find(item => item._id === loadCellId)?.floor} - ${loadCells.find(item => item._id === loadCellId)?.column}) ở ${shelves.find(shelf => shelf._id === loadCells.find(item => item._id === loadCellId)?.shelf_id)?.shelf_name}`;
+      } else if (quantity === 200) {
+        msg = `Cảnh báo: Số lượng sản phẩm trên (ngăn ${loadCells.find(item => item._id === loadCellId)?.floor} - ${loadCells.find(item => item._id === loadCellId)?.column}) ở ${shelves.find(shelf => shelf._id === loadCells.find(item => item._id === loadCellId)?.shelf_id)?.shelf_name} vượt số lượng tối đa`;
+      } else if (quantity === 222) {
+        msg = `Cảnh báo: Sản phẩm trên (ngăn ${loadCells.find(item => item._id === loadCellId)?.floor} - ${loadCells.find(item => item._id === loadCellId)?.column}) ở ${shelves.find(shelf => shelf._id === loadCells.find(item => item._id === loadCellId)?.shelf_id)?.shelf_name} không đúng`;
+      } else if (quantity === 255) {
+        msg = `Cảnh báo: Ngăn ${loadCells.find(item => item._id === loadCellId)?.floor} - ${loadCells.find(item => item._id === loadCellId)?.column} ở ${shelves.find(shelf => shelf._id === loadCells.find(item => item._id === loadCellId)?.shelf_id)?.shelf_name} lỗi loadcell`;
+      }
+      else {
+        msg = `Cảnh báo: ${prodName} sắp hết (ngăn ${loadCells.find(item => item._id === loadCellId)?.floor} - ${loadCells.find(item => item._id === loadCellId)?.column})} ở ${shelves.find(shelf => shelf._id === loadCells.find(item => item._id === loadCellId)?.shelf_id)?.shelf_name}`;
+      }
 
       const payload: CreateNotificationRequest = {
         message: msg,
-        type: quantity === 0 ? "error" : "warning",
+        type: quantity === 0 || quantity === 200 || quantity === 255 || quantity === 222 ? "error" : "warning",
         shelfId: shelfId,
         productId: product?._id,
       };

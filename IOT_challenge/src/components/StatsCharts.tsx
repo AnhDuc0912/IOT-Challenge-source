@@ -26,20 +26,13 @@ export default function StatsCharts({ products = [], revenue = [], sx }: StatsCh
   const productsData = products.length
     ? products
     : [
-        { name: "Sản phẩm A", count: 32 },
-        { name: "Sản phẩm B", count: 21 },
-        { name: "Sản phẩm C", count: 16 },
-        { name: "Khác", count: 15 },
+      
       ];
 
   const revenueData = revenue.length
     ? revenue
     : [
-        { period: "Th06", revenue: 1200000 },
-        { period: "Th07", revenue: 1850000 },
-        { period: "Th08", revenue: 950000 },
-        { period: "Th09", revenue: 2300000 },
-        { period: "Th10", revenue: 1750000 },
+       
       ];
 
   return (
