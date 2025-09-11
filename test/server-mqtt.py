@@ -8,7 +8,7 @@ from datetime import datetime
 def create_data():
     return {
         "id": "48:b0:2d:3d:2b:28",
-        "values": [random.randint(0, 2) for _ in range(15)]
+        "values": [200, 200,200,200,200,200,200,200,200,200,200,200,200,200,200]
     }
 
 # Tạo MQTT client sử dụng WebSocket

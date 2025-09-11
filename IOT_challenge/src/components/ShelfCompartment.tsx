@@ -79,6 +79,13 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
         handleCreateNotification(shelfItem._id, localProduct, quantity, localThreshold);
       }
     }
+
+    if (quantity === 200 || quantity === 222 || quantity === 255  ) {
+      if (shelfItem) {
+        
+        handleCreateNotification(shelfItem._id, localProduct, quantity, localThreshold);
+      }
+    }
   }, [quantity]);
 
   const handleOpenMenu = (event: React.MouseEvent) => {

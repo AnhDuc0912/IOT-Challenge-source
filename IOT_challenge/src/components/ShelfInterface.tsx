@@ -469,6 +469,9 @@ export default function ShelfInterface() {
         msg = `Cảnh báo: ${prodName} sắp hết (ngăn ${loadCells.find(item => item._id === loadCellId)?.floor} - ${loadCells.find(item => item._id === loadCellId)?.column})} ở ${shelves.find(shelf => shelf._id === loadCells.find(item => item._id === loadCellId)?.shelf_id)?.shelf_name}`;
       }
 
+      console.log(msg);
+      
+
       const payload: CreateNotificationRequest = {
         message: msg,
         type: quantity === 0 || quantity === 200 || quantity === 255 || quantity === 222 ? "error" : "warning",
