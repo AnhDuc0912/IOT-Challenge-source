@@ -19,6 +19,13 @@ interface ShelfCompartmentProps {
   onViewProductInfo: (product: Product) => void;
   onUpdateQuantity?: (cellId: string, newQuantity: number) => void; // Thêm prop mới
   onUpdateThreshold?: (cellId: string, newThreshold: number) => void; // Thêm prop mới
+  // now receives contextual info: loadCellId, product, quantity, threshold
+  handleCreateNotification: (
+    loadCellId: string,
+    product: Product | null,
+    quantity: number,
+    threshold?: number
+  ) => void;
 }
 
 const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
@@ -32,6 +39,7 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
   onViewProductInfo, // Thêm prop mới
   onUpdateQuantity,
   onUpdateThreshold,
+  handleCreateNotification
 }) => {
   const isEmpty = !shelfItem?.product;
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -63,6 +71,13 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
       setIsLoadCellError(quantity);
     } else {
       setIsLoadCellError(0); // Reset lỗi nếu không phải các mã lỗi
+    }
+
+    if (quantity < Number(localThreshold)) {
+      if (shelfItem) {
+        
+        handleCreateNotification(shelfItem._id, localProduct, quantity, localThreshold);
+      }
     }
   }, [quantity]);
 
@@ -152,29 +167,29 @@ const ShelfCompartment: React.FC<ShelfCompartmentProps> = ({
         borderColor: isEmpty
           ? "grey.300"
           : isLoadCellError
-          ? "warning.main"
-          : displayQuantity === 0
-          ? "error.main"
-          : displayQuantity && localThreshold && displayQuantity < localThreshold
-          ? "warning.main"
-          : "primary.main",
+            ? "warning.main"
+            : displayQuantity === 0
+              ? "error.main"
+              : displayQuantity && localThreshold && displayQuantity < localThreshold
+                ? "warning.main"
+                : "primary.main",
         backgroundColor: isEmpty ? "grey.50" : "background.paper",
         cursor: isEmpty
           ? "default"
           : isLoadCellError
-          ? "not-allowed"
-          : "pointer",
+            ? "not-allowed"
+            : "pointer",
         transition: "all 0.3s ease",
         "&:hover": {
           borderColor: isEmpty
             ? "grey.400"
             : isLoadCellError
-            ? "warning.dark"
-            : displayQuantity === 0
-            ? "error.dark"
-            : displayQuantity && localThreshold && displayQuantity < localThreshold
-            ? "warning.dark"
-            : "primary.dark",
+              ? "warning.dark"
+              : displayQuantity === 0
+                ? "error.dark"
+                : displayQuantity && localThreshold && displayQuantity < localThreshold
+                  ? "warning.dark"
+                  : "primary.dark",
           backgroundColor: isEmpty ? "grey.100" : "grey.50",
         },
         opacity: isLoadCellError ? 0.7 : 1,

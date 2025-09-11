@@ -5,8 +5,12 @@ const Shelf = require("../model/Shelf");
 // Create a new notification
 const createNotification = async (req, res) => {
   try {
+    const io = req.app.get('io');
+
     const notification = new Notification(req.body);
     const savedNotification = await notification.save();
+    if (io) io.emit('new-notification', savedNotification);
+
     res.status(201).json({
       success: true,
       data: savedNotification,
@@ -22,31 +26,35 @@ const createNotification = async (req, res) => {
 // Get all notifications
 const getAllNotifications = async (req, res) => {
   try {
-    const { page = 1, limit = 10, read, type } = req.query;
-    
+    const {
+      page = 1, limit = 10, read, type
+    } = req.query;
+
     let query = {};
-    
+
     // Filter by read status
     if (read !== undefined) {
       query.read = read === 'true';
     }
-    
+
     // Filter by type
     if (type) {
       query.type = type;
     }
-    
+
     const notifications = await Notification.find(query)
       .populate('shelf_id', 'shelf_name')
       .populate('load_cell_id', 'load_cell_name')
       .populate('product_id', 'product_name')
       .populate('user_id', 'username')
-      .sort({ timestamp: -1 })
+      .sort({
+        timestamp: -1
+      })
       .limit(limit * 1)
       .skip((page - 1) * limit);
-    
+
     const total = await Notification.countDocuments(query);
-    
+
     res.status(200).json({
       success: true,
       data: notifications,
@@ -73,14 +81,14 @@ const getNotificationById = async (req, res) => {
       .populate('load_cell_id', 'load_cell_name')
       .populate('product_id', 'product_name')
       .populate('user_id', 'username');
-    
+
     if (!notification) {
       return res.status(404).json({
         success: false,
         message: "Notification not found",
       });
     }
-    
+
     res.status(200).json({
       success: true,
       data: notification,
@@ -97,18 +105,20 @@ const getNotificationById = async (req, res) => {
 const markAsRead = async (req, res) => {
   try {
     const notification = await Notification.findByIdAndUpdate(
-      req.params.id,
-      { read: true },
-      { new: true }
+      req.params.id, {
+        read: true
+      }, {
+        new: true
+      }
     );
-    
+
     if (!notification) {
       return res.status(404).json({
         success: false,
         message: "Notification not found",
       });
     }
-    
+
     res.status(200).json({
       success: true,
       data: notification,
@@ -124,11 +134,12 @@ const markAsRead = async (req, res) => {
 // Mark all notifications as read
 const markAllAsRead = async (req, res) => {
   try {
-    const result = await Notification.updateMany(
-      { read: false },
-      { read: true }
-    );
-    
+    const result = await Notification.updateMany({
+      read: false
+    }, {
+      read: true
+    });
+
     res.status(200).json({
       success: true,
       message: `${result.modifiedCount} notifications marked as read`,
@@ -145,14 +156,14 @@ const markAllAsRead = async (req, res) => {
 const deleteNotification = async (req, res) => {
   try {
     const notification = await Notification.findByIdAndDelete(req.params.id);
-    
+
     if (!notification) {
       return res.status(404).json({
         success: false,
         message: "Notification not found",
       });
     }
-    
+
     res.status(200).json({
       success: true,
       message: "Notification deleted successfully",
@@ -168,11 +179,15 @@ const deleteNotification = async (req, res) => {
 // Get unread notifications count
 const getUnreadCount = async (req, res) => {
   try {
-    const count = await Notification.countDocuments({ read: false });
-    
+    const count = await Notification.countDocuments({
+      read: false
+    });
+
     res.status(200).json({
       success: true,
-      data: { unreadCount: count },
+      data: {
+        unreadCount: count
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -194,7 +209,9 @@ const createLowQuantityNotification = async (loadcell, io) => {
       load_cell_id: loadcell._id,
       type: "warning",
       read: false,
-      message: { $regex: "run out of goods" }
+      message: {
+        $regex: "run out of goods"
+      }
     });
     if (existed) return; // Đã có cảnh báo chưa đọc, không tạo thêm
 
@@ -248,4 +265,4 @@ module.exports = {
   deleteNotification,
   getUnreadCount,
   createLowQuantityNotification, // <-- export thêm hàm này
-}; 
+};

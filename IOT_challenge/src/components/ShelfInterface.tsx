@@ -48,6 +48,7 @@ import ProductDialog from "./ProductDialog";
 import TaskDialog from "./TaskDialog";
 import ShelfInfoDialog from "./ShelfInfoDialog";
 import { User } from "../types/userTypes";
+import { createNotification, CreateNotificationRequest } from "../service/notification.service";
 
 
 export default function ShelfInterface() {
@@ -313,11 +314,11 @@ export default function ShelfInterface() {
           prev.map((cell): LoadCell =>
             cell._id === targetCell._id
               ? {
-                  ...cell,
-                  product_id: (product._id ?? null) as string | null,
-                  quantity: 1,
-                  previous_product_id: (cell.product_id ?? null) as string | null, // đảm bảo không undefined
-                }
+                ...cell,
+                product_id: (product._id ?? null) as string | null,
+                quantity: 1,
+                previous_product_id: (cell.product_id ?? null) as string | null, // đảm bảo không undefined
+              }
               : cell
           )
         );
@@ -327,12 +328,12 @@ export default function ShelfInterface() {
           prev.map((item) =>
             item._id === targetCell._id
               ? {
-                  ...item,
-                  product_id: (product._id ?? null) as string | null,
-                  quantity: 1,
-                  previous_product_id: (item.product_id ?? null) as string | null,
-                  product: product,
-                }
+                ...item,
+                product_id: (product._id ?? null) as string | null,
+                quantity: 1,
+                previous_product_id: (item.product_id ?? null) as string | null,
+                product: product,
+              }
               : item
           )
         );
@@ -441,6 +442,38 @@ export default function ShelfInterface() {
           : item
       )
     );
+  };
+
+  // Create notification via API
+  const handleCreateNotification = async (
+    loadCellId: string,
+    product: Product | null,
+    quantity: number,
+    threshold?: number
+  ) => {
+    try {
+      const prodName = product?.product_name ?? "Sản phẩm";
+      const shelfId = activeShelf?.shelf_id ?? undefined;
+      const msg =
+        quantity === 0
+          ? `Hết hàng: ${prodName} (ngăn ${loadCells.find(item => item._id === loadCellId)?.floor} - ${loadCells.find(item => item._id === loadCellId)?.column}) ở ${shelves.find(shelf => shelf._id === loadCells.find(item => item._id === loadCellId)?.shelf_id)?.shelf_name}`
+          : `Cảnh báo: ${prodName} sắp hết (ngăn ${loadCells.find(item => item._id === loadCellId)?.floor} - ${loadCells.find(item => item._id === loadCellId)?.column})} ở ${shelves.find(shelf => shelf._id === loadCells.find(item => item._id === loadCellId)?.shelf_id)?.shelf_name}`;
+
+      console.log(msg);
+
+      const payload: CreateNotificationRequest = {
+        message: msg,
+        type: quantity === 0 ? "error" : "warning",
+        shelfId: shelfId,
+        productId: product?._id,
+      };
+
+      await createNotification(payload);
+      // optionally show a short UI hint
+      console.log("Notification created:", msg);
+    } catch (e) {
+      console.error("Failed to create notification:", e);
+    }
   };
 
   return (
@@ -714,6 +747,10 @@ export default function ShelfInterface() {
                             onViewProductInfo={handleViewProductInfo}
                             onUpdateQuantity={handleUpdateQuantity} // Thêm prop mới
                             onUpdateThreshold={handleUpdateThreshold} // Thêm prop mới
+                            // pass handler that accepts contextual info
+                            handleCreateNotification={(loadCellId, product, qty, thresh) =>
+                              handleCreateNotification(loadCellId, product, qty, thresh)
+                            }
                           />
                         </Grid>
                       );

@@ -7,12 +7,20 @@ const connectDB = require('./src/config/database')
 // Thêm các dòng sau:
 const http = require('http');
 const server = http.createServer(app);
-const { Server } = require('socket.io');
+const {
+  Server
+} = require('socket.io');
 const io = new Server(server, {
   cors: {
     origin: "*", // hoặc chỉ định domain FE
-    methods: ["GET", "POST"]
+    methods: ["GET", "POST"],
+    transports: ['websocket', 'polling'],
   }
+});
+
+io.on('connection', (socket) => {
+  console.log('⚡ client connected:', socket.id);
+  // (tuỳ chọn) socket.on('join', room => socket.join(room));
 });
 
 // Cho phép truy cập io từ controller
@@ -38,8 +46,12 @@ app.use(express.json({
   }
 }));
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({
+  limit: '10mb'
+}));
+app.use(express.urlencoded({
+  extended: true
+}));
 
 
 // middleware bắt lỗi parse JSON
@@ -47,7 +59,10 @@ app.use((err, req, res, next) => {
   if (err && err.type === 'entity.parse.failed') {
     console.error('Invalid JSON payload:', err.message);
     console.error('Raw body:', req.rawBody);
-    return res.status(400).json({ success: false, error: 'Invalid JSON payload' });
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid JSON payload'
+    });
   }
   next(err);
 });

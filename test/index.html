@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Realtime Notifications (Socket.IO)</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #111827;
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --ok: #10b981;
+            --warn: #f59e0b;
+            --err: #ef4444;
+            --info: #3b82f6;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font: 16px/1.5 system-ui, Segoe UI, Roboto, Helvetica, Arial
+        }
+
+        .wrap {
+            max-width: 900px;
+            margin: 32px auto;
+            padding: 0 16px
+        }
+
+        .title {
+            font-size: 24px;
+            margin: 0 0 16px
+        }
+
+        .row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap
+        }
+
+        .col {
+            flex: 1 1 320px;
+            background: var(--card);
+            border: 1px solid #1f2937;
+            border-radius: 16px;
+            padding: 16px
+        }
+
+        .col h2 {
+            margin: 0 0 12px;
+            font-size: 18px
+        }
+
+        .list {
+            display: grid;
+            gap: 10px;
+            max-height: 60vh;
+            overflow: auto;
+            padding-right: 4px
+        }
+
+        .item {
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 12px;
+            background: #0b1220
+        }
+
+        .meta {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 6px
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            border-radius: 999px;
+            padding: 4px 10px;
+            border: 1px solid #1f2937
+        }
+
+        .b-info {
+            background: color-mix(in srgb, var(--info) 18%, transparent);
+            color: #cfe3ff
+        }
+
+        .b-warn {
+            background: color-mix(in srgb, var(--warn) 18%, transparent);
+            color: #ffedc2
+        }
+
+        .b-ok {
+            background: color-mix(in srgb, var(--ok) 18%, transparent);
+            color: #d6ffee
+        }
+
+        .b-err {
+            background: color-mix(in srgb, var(--err) 18%, transparent);
+            color: #ffd6d6
+        }
+
+        .form label {
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+            margin: 8px 0 4px
+        }
+
+        .form input,
+        .form select,
+        .form textarea {
+            width: 100%;
+            background: #0b1220;
+            border: 1px solid #1f2937;
+            color: var(--text);
+            border-radius: 10px;
+            padding: 10px
+        }
+
+        .form button {
+            margin-top: 12px;
+            width: 100%;
+            padding: 12px;
+            border: 0;
+            border-radius: 12px;
+            background: linear-gradient(90deg, var(--info), #22c55e);
+            color: white;
+            font-weight: 600;
+            cursor: pointer
+        }
+
+        .form button:active {
+            transform: translateY(1px)
+        }
+
+        .empty {
+            color: var(--muted);
+            text-align: center;
+            padding: 16px;
+            border: 1px dashed #1f2937;
+            border-radius: 12px
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <h1 class="title">🔔 Realtime Notifications (Socket.IO)</h1>
+        <div class="row">
+            <div class="col">
+                <h2>Gửi thử thông báo</h2>
+                <form id="send-form" class="form">
+                    <label>Message</label>
+                    <input id="msg" placeholder="VD: [1:2] của kệ A1 sắp hết hàng" />
+                    <label>Type</label>
+                    <select id="type">
+                        <option value="info">info</option>
+                        <option value="success">success</option>
+                        <option value="warning">warning</option>
+                        <option value="error">error</option>
+                    </select>
+                    <label>Shelf ID (tuỳ chọn)</label>
+                    <input id="shelf" placeholder="A1 / B2 ..." />
+                    <label>Extra JSON (tuỳ chọn)</label>
+                    <textarea id="extra" rows="3" placeholder='{"floor":1,"col":2,"product_id":"..."}'></textarea>
+                    <button type="submit">Gửi ngay</button>
+                </form>
+            </div>
+            <div class="col">
+                <h2>Luồng realtime</h2>
+                <div id="list" class="list">
+                    <div class="empty">Chưa có dữ liệu...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Socket.IO client do server cung cấp -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.js"
+        integrity="sha512-8BHxHDLsOHx+flIrQ0DrZcea7MkHqRU5GbTHmbdzMRnAaoCIkZ97PqZcXJkKZckMMhqfoeaJE+DNUVuyoQsO3Q=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        // Kết nối Socket cùng origin (http://localhost:3000)
+        const socket = io('http://localhost:3000', {
+            transports: ['websocket', 'polling']
+        });
+
+        socket.on('connect', () => console.log('Connected:', socket.id));
+
+        socket.on('new-notification', (payload) => {
+            // show lên UI hoặc tạo local notification trên Android
+            console.log('Realtime:', payload);
+        });
+
+        const listEl = document.getElementById('list');
+
+        const typeBadge = (type) => {
+            const t = String(type || 'info').toLowerCase();
+            const map = {
+                info: 'b-info',
+                success: 'b-ok',
+                warning: 'b-warn',
+                error: 'b-err'
+            };
+            return `<span class="badge ${map[t] || 'b-info'}">• ${t}</span>`;
+        };
+
+        function fmtTime(ts) {
+            const d = new Date(ts || Date.now());
+            return d.toLocaleString();
+        }
+
+        function addItem(payload) {
+            // Xoá dòng "empty"
+            const empty = listEl.querySelector('.empty');
+            if (empty) empty.remove();
+
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.innerHTML = `
+      <div>${payload.message ?? 'Bạn có thông báo mới'}</div>
+      <div class="meta">
+        ${typeBadge(payload.type)}
+        <span>⏱ ${fmtTime(payload.timestamp)}</span>
+        ${payload.shelf_id ? `<span>📦 Shelf: ${payload.shelf_id}</span>` : ''}
+      </div>
+    `;
+            listEl.prepend(div);
+        }
+
+        // Lắng nghe server đẩy sự kiện
+        socket.on('connect', () => console.log('Connected:', socket.id));
+        socket.on('new-notification', (payload) => {
+            addItem(payload);
+        });
+
+        // Form gửi thử về server
+        document.getElementById('send-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = document.getElementById('msg').value.trim();
+            const type = document.getElementById('type').value;
+            const shelf_id = document.getElementById('shelf').value.trim();
+            const extraTxt = document.getElementById('extra').value.trim();
+
+            let extra = {};
+            if (extraTxt) {
+                try {
+                    extra = JSON.parse(extraTxt)
+                } catch {
+                    alert('Extra JSON không hợp lệ');
+                    return;
+                }
+            }
+
+            const r = await fetch('/api/notify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message,
+                    type,
+                    shelf_id,
+                    extra
+                })
+            });
+            if (!r.ok) alert('Gửi thất bại');
+        });
+    </script>
+</body>
+
+</html>
