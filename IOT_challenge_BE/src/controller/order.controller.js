@@ -43,12 +43,21 @@ exports.createOrderWithDetails = async (req, res) => {
                 // ignore
             }
         }
-        if (typeof orderDetailsField === "string") {
-            try {
-                orderDetailsField = JSON.parse(orderDetailsField);
-            } catch {
-                orderDetailsField = [];
-            }
+            if (typeof orderDetailsField === "string") {
+                try {
+                    orderDetailsField = JSON.parse(orderDetailsField);
+                } catch (e) {
+                    // Fallback: some clients send JS-like object with single quotes
+                    // e.g. '{'product_id': '...', ...}' — try to convert to valid JSON
+                    try {
+                        const fixed = orderDetailsField.replace(/'/g, '"');
+                        orderDetailsField = JSON.parse(fixed);
+                        console.log('DEBUG orderDetailsField parsed after quote-fix');
+                    } catch (e2) {
+                        console.warn('Failed to parse orderDetailsField as JSON:', e.message, '; fallback also failed');
+                        orderDetailsField = [];
+                    }
+                }
         }
         const orderDetails = Array.isArray(orderDetailsField) ?
             orderDetailsField :
