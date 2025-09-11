@@ -13,6 +13,19 @@ exports.createOrderWithDetails = async (req, res) => {
         // 1) Parse body cho cả JSON lẫn multipart
         const body = req.body || {};
 
+        // Debugging: log headers/body/files to diagnose empty orderDetails
+        try {
+            console.log('DEBUG headers.content-type:', req.headers['content-type']);
+            console.log('DEBUG req.body keys:', Object.keys(req.body || {}));
+            if (req.rawBody) {
+                console.log('DEBUG rawBody (truncated):',
+                    typeof req.rawBody === 'string' ? req.rawBody.slice(0, 500) : String(req.rawBody).slice(0, 500));
+            }
+            console.log('DEBUG has req.file:', !!req.file, 'req.files keys:', req.files ? Object.keys(req.files) : req.files);
+        } catch (dbgErr) {
+            console.error('Debug log error:', dbgErr && dbgErr.message);
+        }
+
         // ép kiểu số cho tổng bill
         const total_bill =
             body.total_bill !== undefined && body.total_bill !== null ?
@@ -21,6 +34,15 @@ exports.createOrderWithDetails = async (req, res) => {
 
         // parse orderDetails nếu là string (multipart)
         let orderDetailsField = body.orderDetails;
+        console.log('DEBUG raw orderDetailsField type:', typeof orderDetailsField);
+        if (typeof orderDetailsField !== 'undefined') {
+            try {
+                console.log('DEBUG raw orderDetailsField (truncated):',
+                    (typeof orderDetailsField === 'string' ? orderDetailsField.slice(0, 500) : JSON.stringify(orderDetailsField)));
+            } catch (e) {
+                // ignore
+            }
+        }
         if (typeof orderDetailsField === "string") {
             try {
                 orderDetailsField = JSON.parse(orderDetailsField);
