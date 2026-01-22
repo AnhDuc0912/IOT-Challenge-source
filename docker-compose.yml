@@ -22,7 +22,7 @@ services:
       context: ./IOT_challenge
     container_name: iot-frontend
     ports:
-      - "8080:80"
+      - "8081:80"
     depends_on:
       backend:
         condition: service_healthy
