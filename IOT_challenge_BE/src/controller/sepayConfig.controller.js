@@ -1,0 +1,53 @@
+const SepayConfig = require('../model/SepayConfig');
+
+function sanitizePayload(body = {}) {
+  const update = {};
+  const stringFields = ['apiKey', 'apiSecret', 'merchantCode', 'webhookUrl', 'callbackUrl'];
+  stringFields.forEach((field) => {
+    if (Object.prototype.hasOwnProperty.call(body, field)) {
+      const value = body[field];
+      if (value !== undefined && value !== null) update[field] = String(value).trim();
+    }
+  });
+
+  if (Object.prototype.hasOwnProperty.call(body, 'sandbox')) {
+    update.sandbox = Boolean(body.sandbox);
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'active')) {
+    update.active = Boolean(body.active);
+  }
+
+  return update;
+}
+
+exports.getConfig = async (req, res) => {
+  try {
+    const config = await SepayConfig.findOne();
+    if (!config) {
+      return res.status(404).json({ error: 'Sepay config not found' });
+    }
+    res.json(config);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.upsertConfig = async (req, res) => {
+  try {
+    const update = sanitizePayload(req.body);
+    if (!Object.keys(update).length) {
+      return res.status(400).json({ error: 'No fields provided' });
+    }
+
+    const config = await SepayConfig.findOneAndUpdate({}, update, {
+      new: true,
+      upsert: true,
+      setDefaultsOnInsert: true,
+      runValidators: true,
+    });
+
+    res.json(config);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};

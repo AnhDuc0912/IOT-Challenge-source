@@ -7,14 +7,15 @@ import {
   Button,
   Snackbar,
   Alert,
+  IconButton,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
 import NotificationBell from "./NotificationBell";
 import { logout } from "../store/user.actions";
-import HomeIcon from '@mui/icons-material/Home';
 import { Dashboard } from "@mui/icons-material";
+import SettingsIcon from "@mui/icons-material/Settings";
 
 const HeaderBar: React.FC = () => {
   const [editingShelf, setEditingShelf] = useState<number | null>(null);
@@ -85,6 +86,9 @@ const HeaderBar: React.FC = () => {
             <Box sx={{ ml: "auto" }}>
               {isLoggedIn ? (
                 <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <IconButton color="inherit" onClick={() => navigate("/config")} sx={{ mr: 1 }}>
+                    <SettingsIcon />
+                  </IconButton>
                   <NotificationBell />
                   <Typography>{user?.fullName}</Typography>
                   <Button

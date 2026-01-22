@@ -12,6 +12,7 @@ import DashboardPage from "./pages/DashboardPage";
 import ComboPage from "./pages/ComboPage";
 import HistoryPage from "./pages/HistoryPage";
 import PostersPage from "./pages/PostersPage";
+import ConfigPage from "./pages/ConfigPage";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
           <Route path="/receipts" element={<ReceiptPage />} />
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/posters" element={<PostersPage />} />
+          <Route path="/config" element={<ConfigPage />} />
         </Route>
 
         <Route path="/login" element={<LoginPage />} />

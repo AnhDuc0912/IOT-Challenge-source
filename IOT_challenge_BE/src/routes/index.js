@@ -11,6 +11,7 @@ const taskRoutes = require("./task");
 const comboRoutes = require("./combo");
 const historyRoutes = require("./history");
 const posterRoutes = require("./poster");
+const sepayConfigRoutes = require("./sepayConfig");
 
 // Gắn các route con vào router chính
 router.use("/products", productRoutes);
@@ -23,6 +24,7 @@ router.use("/tasks", taskRoutes);
 router.use("/combos", comboRoutes);
 router.use("/histories", historyRoutes);
 router.use("/posters", posterRoutes);
+router.use("/sepay-config", sepayConfigRoutes);
 
 router.get('/health', (req, res) => {
   res.status(200).json({
