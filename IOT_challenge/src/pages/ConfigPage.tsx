@@ -22,6 +22,9 @@ const defaultConfig: SepayConfig = {
   merchantCode: "",
   webhookUrl: "",
   callbackUrl: "",
+  vietqrAccountNo: "",
+  vietqrAccountName: "",
+  vietqrAcqId: "",
   sandbox: true,
   active: true,
 };
@@ -68,6 +71,9 @@ const ConfigPage: React.FC = () => {
         merchantCode: form.merchantCode,
         webhookUrl: form.webhookUrl,
         callbackUrl: form.callbackUrl,
+        vietqrAccountNo: form.vietqrAccountNo,
+        vietqrAccountName: form.vietqrAccountName,
+        vietqrAcqId: form.vietqrAcqId,
         sandbox: form.sandbox,
         active: form.active,
       };
@@ -144,6 +150,30 @@ const ConfigPage: React.FC = () => {
               fullWidth
               value={form.callbackUrl || ""}
               onChange={handleChange("callbackUrl")}
+            />
+          </Grid>
+          <Grid size={{ md: 6 , sm: 12 }}>
+            <TextField
+              label="VietQR Account No"
+              fullWidth
+              value={form.vietqrAccountNo || ""}
+              onChange={handleChange("vietqrAccountNo")}
+            />
+          </Grid>
+          <Grid size={{ md: 6 , sm: 12 }}>
+            <TextField
+              label="VietQR Account Name"
+              fullWidth
+              value={form.vietqrAccountName || ""}
+              onChange={handleChange("vietqrAccountName")}
+            />
+          </Grid>
+          <Grid size={{ md: 6 , sm: 12 }}>
+            <TextField
+              label="VietQR Acq ID"
+              fullWidth
+              value={form.vietqrAcqId || ""}
+              onChange={handleChange("vietqrAcqId")}
             />
           </Grid>
           <Grid size={{ md: 6 , sm: 12 }}>

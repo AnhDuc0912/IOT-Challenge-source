@@ -22,16 +22,6 @@ function sanitizePayload(body = {}) {
     }
   });
 
-  // cast shelf_id to ObjectId if valid
-  if (update.shelf_id) {
-    if (mongoose.Types.ObjectId.isValid(update.shelf_id)) {
-      update.shelf_id = mongoose.Types.ObjectId(update.shelf_id);
-    } else {
-      // invalid id -> remove to avoid cast error
-      delete update.shelf_id;
-    }
-  }
-
   if (Object.prototype.hasOwnProperty.call(body, 'sandbox')) {
     update.sandbox = Boolean(body.sandbox);
   }
@@ -57,10 +47,12 @@ exports.getConfig = async (req, res) => {
 exports.getConfigByShelfId = async (req, res) => {
   try {
     const { shelfId } = req.params;
+    
     if (!mongoose.Types.ObjectId.isValid(shelfId)) {
       return res.status(400).json({ error: 'Invalid shelfId' });
     }
-    const config = await SepayConfig.findOne({ shelf_id: mongoose.Types.ObjectId(shelfId) });
+    
+    const config = await SepayConfig.findOne({ shelf_id: new mongoose.Types.ObjectId(shelfId) });
     if (!config) {
       return res.status(404).json({ error: 'Sepay config for shelf not found' });
     }
