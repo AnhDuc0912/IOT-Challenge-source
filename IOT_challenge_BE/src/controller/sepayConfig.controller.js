@@ -69,7 +69,17 @@ exports.upsertConfig = async (req, res) => {
       return res.status(400).json({ error: 'No fields provided' });
     }
 
-    const config = await SepayConfig.findOneAndUpdate({}, update, {
+    let query = {};
+    if (update.shelf_id) {
+      // Nếu có shelf_id, tìm và update theo shelf_id đó
+      if (mongoose.Types.ObjectId.isValid(update.shelf_id)) {
+        query.shelf_id = new mongoose.Types.ObjectId(update.shelf_id);
+      } else {
+        query.shelf_id = update.shelf_id;
+      }
+    }
+
+    const config = await SepayConfig.findOneAndUpdate(query, update, {
       new: true,
       upsert: true,
       setDefaultsOnInsert: true,

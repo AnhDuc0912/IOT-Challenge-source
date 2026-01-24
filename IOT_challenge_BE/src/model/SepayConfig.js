@@ -28,6 +28,7 @@ const sepayConfigSchema = new mongoose.Schema(
     shelf_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Shelf',
+      default: () => new mongoose.Types.ObjectId('685aafc545619025a0bb9f27'),
       index: true,
     },
     // thêm 3 field VietQR theo yêu cầu
