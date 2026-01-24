@@ -9,6 +9,8 @@ export interface SepayConfig {
   merchantCode?: string;
   webhookUrl?: string;
   callbackUrl?: string;
+  authToken?: string;
+  bankAccountId?: string;
   vietqrAccountNo?: string;
   vietqrAccountName?: string;
   vietqrAcqId?: string;

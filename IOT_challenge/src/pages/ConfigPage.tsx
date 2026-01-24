@@ -22,6 +22,8 @@ const defaultConfig: SepayConfig = {
   merchantCode: "",
   webhookUrl: "",
   callbackUrl: "",
+  authToken: "",
+  bankAccountId: "",
   vietqrAccountNo: "",
   vietqrAccountName: "",
   vietqrAcqId: "",
@@ -71,6 +73,8 @@ const ConfigPage: React.FC = () => {
         merchantCode: form.merchantCode,
         webhookUrl: form.webhookUrl,
         callbackUrl: form.callbackUrl,
+        authToken: form.authToken,
+        bankAccountId: form.bankAccountId,
         vietqrAccountNo: form.vietqrAccountNo,
         vietqrAccountName: form.vietqrAccountName,
         vietqrAcqId: form.vietqrAcqId,
@@ -150,6 +154,22 @@ const ConfigPage: React.FC = () => {
               fullWidth
               value={form.callbackUrl || ""}
               onChange={handleChange("callbackUrl")}
+            />
+          </Grid>
+          <Grid size={{ md: 6 , sm: 12 }}>
+            <TextField
+              label="Auth Token"
+              fullWidth
+              value={form.authToken || ""}
+              onChange={handleChange("authToken")}
+            />
+          </Grid>
+          <Grid size={{ md: 6 , sm: 12 }}>
+            <TextField
+              label="Bank Account ID"
+              fullWidth
+              value={form.bankAccountId || ""}
+              onChange={handleChange("bankAccountId")}
             />
           </Grid>
           <Grid size={{ md: 6 , sm: 12 }}>

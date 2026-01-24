@@ -24,6 +24,14 @@ const sepayConfigSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    authToken: {
+      type: String,
+      trim: true,
+    },
+    bankAccountId: {
+      type: String,
+      trim: true,
+    },
     // reference to Shelf
     shelf_id: {
       type: mongoose.Schema.Types.ObjectId,

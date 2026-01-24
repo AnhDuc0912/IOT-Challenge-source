@@ -1,6 +1,17 @@
 const mongoose = require('mongoose');
 const SepayConfig = require('../model/SepayConfig');
 
+function serializeConfig(doc) {
+  if (!doc) return null;
+  const obj = doc.toObject({ versionKey: false });
+  // Ensure new fields are always present in responses
+  return {
+    authToken: '',
+    bankAccountId: '',
+    ...obj,
+  };
+}
+
 function sanitizePayload(body = {}) {
   const update = {};
   const stringFields = [
@@ -9,6 +20,8 @@ function sanitizePayload(body = {}) {
     'merchantCode',
     'webhookUrl',
     'callbackUrl',
+    'authToken',
+    'bankAccountId',
     'vietqrAccountNo',
     'vietqrAccountName',
     'vietqrAcqId',
@@ -38,7 +51,7 @@ exports.getConfig = async (req, res) => {
     if (!config) {
       return res.status(404).json({ error: 'Sepay config not found' });
     }
-    res.json(config);
+    res.json(serializeConfig(config));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -56,7 +69,7 @@ exports.getConfigByShelfId = async (req, res) => {
     if (!config) {
       return res.status(404).json({ error: 'Sepay config for shelf not found' });
     }
-    res.json(config);
+    res.json(serializeConfig(config));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -86,7 +99,7 @@ exports.upsertConfig = async (req, res) => {
       runValidators: true,
     });
 
-    res.json(config);
+    res.json(serializeConfig(config));
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
